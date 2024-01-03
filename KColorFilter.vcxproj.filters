@@ -30,6 +30,9 @@
     <ClCompile Include="src\renderer\directx12.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\application.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="header\renderer.h">
@@ -42,6 +45,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="header\renderer\directx12.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="header\application.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,7 +1,10 @@
-#include <iostream>
+#include "application.h"
 
 
 int main() {
-	std::cout << "Hello World" << std::endl;
+	kop::Application app(
+		kop::Application::Backend::OPENGL
+	);
+	app.run();
 	return 0;
 }
