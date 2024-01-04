@@ -1,6 +1,7 @@
 #pragma once
 #include <GLFW/glfw3.h>
 #include <array>
+#include <vector>
 
 
 namespace kop {
@@ -9,13 +10,29 @@ namespace kop {
 
 	};
 
-	class Object : public Entity {
+
+	struct Vertex {
 	public:
-		static constexpr const std::array<size_t, 2> vertexLayout = {
+		float positions[4] = { 0.0f };
+		float color[4] = { 0.0f };
+	public:
+		// methods
+	public:
+		static constexpr const std::array<size_t, 2> layout = {
 			4, // position
 			4, // color
 		};
 	};
+
+
+	struct Object : public Entity {
+	public:
+		std::vector<Vertex> vboData = {};
+		std::vector<unsigned int> eboData = {};
+	public:
+		// methods
+	};
+
 
 	class Renderer {
 	public:
@@ -44,7 +61,8 @@ namespace kop {
 		GLFWwindow* window = nullptr;
 		int windowWidth = 800;
 		int windowHeight = 600;
-		size_t numVertexElements = 0;
+		size_t vertexOffset = 0;
+		size_t elementOffset = 0;
 	protected:
 		static size_t numInstances;
 	};

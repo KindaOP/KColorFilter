@@ -84,7 +84,7 @@ void OpenGL::createVertexBuffers() {
 	glCreateBuffers(1, &this->vbo);
 	glCreateBuffers(1, &this->ebo);
 	glNamedBufferStorage(
-		this->vbo, this->maxVertices * sizeof(float),
+		this->vbo, this->maxVertices * sizeof(Vertex),
 		nullptr, GL_DYNAMIC_STORAGE_BIT
 	);
 	glNamedBufferStorage(
@@ -92,7 +92,7 @@ void OpenGL::createVertexBuffers() {
 		nullptr, GL_DYNAMIC_STORAGE_BIT
 	);
 	glVertexArrayVertexBuffer(
-		this->vao, 0, this->vbo, 0, this->numVertexElements * sizeof(float)
+		this->vao, 0, this->vbo, 0, sizeof(Vertex)
 	);
 	glVertexArrayElementBuffer(this->vao, this->ebo);
 }
@@ -100,15 +100,15 @@ void OpenGL::createVertexBuffers() {
 
 void OpenGL::createVertexArray() {
 	glCreateVertexArrays(1, &this->vao);
-	this->numVertexElements = 0;
-	for (size_t iAttrib = 0; iAttrib < Object::vertexLayout.size(); iAttrib++) {
+	size_t offset = 0;
+	for (size_t iAttrib = 0; iAttrib < Vertex::layout.size(); iAttrib++) {
 		glVertexArrayAttribBinding(this->vao, iAttrib, 0);
 		glVertexArrayAttribFormat(
-			this->vao, iAttrib, Object::vertexLayout[iAttrib],
-			GL_FLOAT, GL_FALSE, this->numVertexElements * sizeof(float)
+			this->vao, iAttrib, Vertex::layout[iAttrib],
+			GL_FLOAT, GL_FALSE, offset
 		);
 		glEnableVertexArrayAttrib(this->vao, iAttrib);
-		this->numVertexElements += Object::vertexLayout[iAttrib];
+		offset += Vertex::layout[iAttrib] * sizeof(float);
 	}
 	glBindVertexArray(this->vao);
 }
@@ -117,15 +117,42 @@ void OpenGL::createVertexArray() {
 void OpenGL::clear() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	this->vertexOffset = 0;
+	this->elementOffset = 0;
 }
 
 
 bool OpenGL::add(const Object& obj) {
+	const size_t numVertices = obj.vboData.size();
+	const size_t numElements = obj.eboData.size();
+	if (
+		this->vertexOffset + numVertices > this->maxVertices ||
+		this->elementOffset + numElements > this->maxElements
+	) {
+		return false;
+	}
+	std::vector<unsigned int> shiftedEboData(obj.eboData);
+	for (unsigned int& element : shiftedEboData) {
+		element += this->vertexOffset;
+	}
+	glNamedBufferSubData(
+		this->vbo, this->vertexOffset * sizeof(Vertex),
+		numVertices * sizeof(Vertex), obj.vboData.data()
+	);
+	glNamedBufferSubData(
+		this->ebo, this->elementOffset * sizeof(unsigned int),
+		numElements * sizeof(unsigned int), shiftedEboData.data()
+	);
+	this->vertexOffset += numVertices;
+	this->elementOffset += numElements;
 	return true;
 }
 
 
 void OpenGL::render() {
+	glDrawElements(
+		GL_TRIANGLES, this->elementOffset, GL_UNSIGNED_INT, nullptr
+	);
 	glfwSwapBuffers(this->window);
 }
 
