@@ -1,7 +1,6 @@
 #include "renderer.h"
 #include <stdexcept>
 
-
 using namespace kop;
 
 

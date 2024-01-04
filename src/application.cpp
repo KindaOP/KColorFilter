@@ -19,7 +19,9 @@ void Application::run() const {
 	GLFWwindow* window = this->renderer->getWindow();
 	glfwShowWindow(window);
 	while (!glfwWindowShouldClose(window)) {
-		glfwPollEvents();
+		this->renderer->clear();
+		this->renderer->render();
+		this->renderer->present();
 	}
 	glfwHideWindow(window);
 }
