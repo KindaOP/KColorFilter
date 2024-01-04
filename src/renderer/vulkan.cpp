@@ -3,7 +3,14 @@
 using namespace kop;
 
 
-Vulkan::Vulkan() {
+Vulkan::Vulkan(
+	const char* vertexShaderPath,
+	const char* fragmentShaderPath,
+	size_t maxVertices,
+	size_t maxElements
+) 
+	: Renderer(vertexShaderPath, fragmentShaderPath, maxVertices, maxElements)
+{
 
 }
 
@@ -13,6 +20,16 @@ Vulkan::~Vulkan() {
 }
 
 
-int Vulkan::getNumber() const {
-	return 0;
+const char* Vulkan::getRendererName() const {
+	return "Vulkan";
+}
+
+
+void Vulkan::createWindow() {
+
+}
+
+
+void Vulkan::createShaderProgram() {
+
 }
