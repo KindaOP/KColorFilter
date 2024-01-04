@@ -35,7 +35,6 @@ void Application::run() const {
 	// Loop
 	GLFWwindow* window = this->renderer->getWindow();
 	glfwShowWindow(window);
-	float r = 0.01;
 	while (!glfwWindowShouldClose(window)) {
 		this->renderer->clear();
 		this->renderer->add(rect);

@@ -16,6 +16,7 @@ namespace kop {
 		);
 		~OpenGL() override;
 		const char* getRendererName() const override;
+		void setViewport(int width, int height) override;
 		void clear() override;
 		bool add(const Object& obj) override;
 		void render() override;
@@ -34,6 +35,9 @@ namespace kop {
 		static unsigned int createShaderModule(
 			GLenum shaderType, 
 			const char* shaderPath
+		);
+		static void windowFrameBufferSizeCallback(
+			GLFWwindow* window, int width, int height
 		);
 		static void APIENTRY glErrorCallback(
 			GLenum source, GLenum type, GLuint idx, GLenum severity,

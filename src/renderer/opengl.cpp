@@ -42,6 +42,13 @@ const char* OpenGL::getRendererName() const {
 }
 
 
+void OpenGL::setViewport(int width, int height) {
+	glViewport(0, 0, width, height);
+	this->windowWidth = width;
+	this->windowHeight = height;
+}
+
+
 void OpenGL::createWindow() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
@@ -58,6 +65,15 @@ void OpenGL::createWindow() {
 	if (glewInit() != GLEW_OK) {
 		throw std::runtime_error("GLEW: Cannot initialize GLEW.");
 	}
+	glfwSetWindowUserPointer(this->window, this);
+	glfwSetFramebufferSizeCallback(
+		this->window, OpenGL::windowFrameBufferSizeCallback
+	);
+	glfwMaximizeWindow(this->window);
+	glfwGetWindowSize(
+		this->window, &this->windowWidth, &this->windowHeight
+	);
+	glViewport(0, 0, this->windowWidth, this->windowHeight);
 	glfwSwapInterval(1);
 	glDebugMessageCallback(OpenGL::glErrorCallback, nullptr);
 }
@@ -188,6 +204,16 @@ unsigned int OpenGL::createShaderModule(
 	glShaderSource(id, 1, &src, 0);
 	glCompileShader(id);
 	return id;
+}
+
+
+void OpenGL::windowFrameBufferSizeCallback(
+	GLFWwindow* window, int width, int height
+) {
+	auto openglRenderer = static_cast<OpenGL* const>(
+		glfwGetWindowUserPointer(window)
+	);
+	openglRenderer->setViewport(width, height);
 }
 
 
