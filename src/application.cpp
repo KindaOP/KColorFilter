@@ -28,10 +28,14 @@ void Application::run() const {
 		0, 1, 2,
 		0, 3, 2,
 	};
+	rect.move({ -0.5f, 0.0f, 0.0f });
+	rect.scale({ 1.0f, 2.0f, 1.0f });
+	rect.applyTransform();
 
 	// Loop
 	GLFWwindow* window = this->renderer->getWindow();
 	glfwShowWindow(window);
+	float r = 0.01;
 	while (!glfwWindowShouldClose(window)) {
 		this->renderer->clear();
 		this->renderer->add(rect);

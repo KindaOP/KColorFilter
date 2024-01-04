@@ -58,6 +58,7 @@ void OpenGL::createWindow() {
 	if (glewInit() != GLEW_OK) {
 		throw std::runtime_error("GLEW: Cannot initialize GLEW.");
 	}
+	glfwSwapInterval(1);
 	glDebugMessageCallback(OpenGL::glErrorCallback, nullptr);
 }
 
@@ -123,7 +124,7 @@ void OpenGL::clear() {
 
 
 bool OpenGL::add(const Object& obj) {
-	const size_t numVertices = obj.vboData.size();
+	const size_t numVertices = obj.getTransformedData().size();
 	const size_t numElements = obj.eboData.size();
 	if (
 		this->vertexOffset + numVertices > this->maxVertices ||
@@ -137,7 +138,7 @@ bool OpenGL::add(const Object& obj) {
 	}
 	glNamedBufferSubData(
 		this->vbo, this->vertexOffset * sizeof(Vertex),
-		numVertices * sizeof(Vertex), obj.vboData.data()
+		numVertices * sizeof(Vertex), obj.getTransformedData().data()
 	);
 	glNamedBufferSubData(
 		this->ebo, this->elementOffset * sizeof(unsigned int),

@@ -106,7 +106,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(ProjectDir)header;$(SolutionDir)..\DEPS\c\glfw-3.3.8-win64\include;$(SolutionDIr)..\DEPS\c\glew-2.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)header;$(SolutionDir)..\DEPS\c\glfw-3.3.8-win64\include;$(SolutionDir)..\DEPS\cpp\glm-0.9.9.8-header;$(SolutionDIr)..\DEPS\c\glew-2.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -125,7 +125,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(ProjectDir)header;$(SolutionDir)..\DEPS\c\glfw-3.3.8-win64\include;$(SolutionDIr)..\DEPS\c\glew-2.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)header;$(SolutionDir)..\DEPS\c\glfw-3.3.8-win64\include;$(SolutionDir)..\DEPS\cpp\glm-0.9.9.8-header;$(SolutionDIr)..\DEPS\c\glew-2.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

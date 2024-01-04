@@ -1,19 +1,15 @@
 #pragma once
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
 #include <array>
 #include <vector>
 
 
 namespace kop {
 
-	class Entity {
-
-	};
-
-
 	struct Vertex {
 	public:
-		float positions[4] = { 0.0f };
+		float position[4] = { 0.0f };
 		float color[4] = { 0.0f };
 	public:
 		// methods
@@ -25,12 +21,39 @@ namespace kop {
 	};
 
 
+	class Entity {
+	public:
+		Entity() = default;
+		virtual ~Entity() = default;
+		glm::vec3 getPos() const;
+		glm::mat3 getDir() const;
+		const glm::mat4& readRMat() const;
+		const glm::mat4& readSMat() const;
+		const glm::mat4& readTMat() const;
+		void setPos(const glm::vec3& xyz);
+		void setDir(const glm::vec3& ypr);
+		void setScale(const glm::vec3& xyz);
+		void move(const glm::vec3& xyz);
+		void rotate(const glm::vec3& ypr);
+		void scale(const glm::vec3& xyz);
+	public:
+		constexpr static const glm::mat4 eye = glm::mat4(1);
+	private:
+		glm::mat4 mT = glm::mat4(1);
+		glm::mat4 mR = glm::mat4(1);
+		glm::mat4 mS = glm::mat4(1);
+	};
+
+
 	struct Object : public Entity {
 	public:
 		std::vector<Vertex> vboData = {};
 		std::vector<unsigned int> eboData = {};
 	public:
-		// methods
+		void applyTransform();
+		const std::vector<Vertex>& getTransformedData() const;
+	private:
+		std::vector<Vertex> vbodataTransformed = {};
 	};
 
 
