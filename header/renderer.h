@@ -1,6 +1,7 @@
 #pragma once
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <backends/imgui_impl_glfw.h>
 #include <array>
 #include <vector>
 
@@ -81,13 +82,18 @@ namespace kop {
 	protected:
 		virtual void createWindow() = 0;
 		virtual void createShaderProgram() = 0;
+		virtual void createVertexBuffers() = 0;
+		void createGUI();
 	protected:
 		GLFWwindow* window = nullptr;
 		int windowWidth = 800;
 		int windowHeight = 600;
 		size_t vertexOffset = 0;
 		size_t elementOffset = 0;
-	protected:
+		ImGuiContext* imgui = nullptr;
+		ImGuiWindowFlags imguiWindowFlags = 0;
+		ImGuiColorEditFlags imguiColorEditFlags = 0;
+	private:
 		static size_t numInstances;
 	};
 

@@ -25,12 +25,14 @@ namespace kop {
 		void createWindow() override;
 		void createShaderProgram() override;
 		void createVertexArray();
-		void createVertexBuffers();
+		void createVertexBuffers() override;
 	private:
 		unsigned int shader = 0;
 		unsigned int vao = 0;
 		unsigned int vbo = 0;
 		unsigned int ebo = 0;
+	private:
+		static size_t numInstance;
 	private:
 		static unsigned int createShaderModule(
 			GLenum shaderType, 

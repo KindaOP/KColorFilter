@@ -1,4 +1,5 @@
 #include "renderer/opengl.h"
+#include <backends/imgui_impl_opengl3.h>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -26,6 +27,11 @@ OpenGL::OpenGL(
 	this->createShaderProgram();
 	this->createVertexArray();
 	this->createVertexBuffers();
+	if (OpenGL::numInstance == 0) {
+		ImGui_ImplGlfw_InitForOpenGL(this->window, false);
+		ImGui_ImplOpenGL3_Init("#version 460");
+	}
+	OpenGL::numInstance += 1;
 }
 
 
@@ -34,6 +40,10 @@ OpenGL::~OpenGL() {
 	glDeleteBuffers(1, &this->ebo);
 	glDeleteVertexArrays(1, &this->vao);
 	glDeleteProgram(this->shader);
+	OpenGL::numInstance -= 1;
+	if (OpenGL::numInstance == 0) {
+		ImGui_ImplOpenGL3_Shutdown();
+	}
 }
 
 
@@ -97,6 +107,22 @@ void OpenGL::createShaderProgram() {
 }
 
 
+void OpenGL::createVertexArray() {
+	glCreateVertexArrays(1, &this->vao);
+	size_t offset = 0;
+	for (size_t iAttrib = 0; iAttrib < Vertex::layout.size(); iAttrib++) {
+		glVertexArrayAttribBinding(this->vao, iAttrib, 0);
+		glVertexArrayAttribFormat(
+			this->vao, iAttrib, Vertex::layout[iAttrib],
+			GL_FLOAT, GL_FALSE, offset
+		);
+		glEnableVertexArrayAttrib(this->vao, iAttrib);
+		offset += Vertex::layout[iAttrib] * sizeof(float);
+	}
+	glBindVertexArray(this->vao);
+}
+
+
 void OpenGL::createVertexBuffers() {
 	glCreateBuffers(1, &this->vbo);
 	glCreateBuffers(1, &this->ebo);
@@ -112,22 +138,6 @@ void OpenGL::createVertexBuffers() {
 		this->vao, 0, this->vbo, 0, sizeof(Vertex)
 	);
 	glVertexArrayElementBuffer(this->vao, this->ebo);
-}
-
-
-void OpenGL::createVertexArray() {
-	glCreateVertexArrays(1, &this->vao);
-	size_t offset = 0;
-	for (size_t iAttrib = 0; iAttrib < Vertex::layout.size(); iAttrib++) {
-		glVertexArrayAttribBinding(this->vao, iAttrib, 0);
-		glVertexArrayAttribFormat(
-			this->vao, iAttrib, Vertex::layout[iAttrib],
-			GL_FLOAT, GL_FALSE, offset
-		);
-		glEnableVertexArrayAttrib(this->vao, iAttrib);
-		offset += Vertex::layout[iAttrib] * sizeof(float);
-	}
-	glBindVertexArray(this->vao);
 }
 
 
@@ -177,6 +187,9 @@ void OpenGL::render() {
 void OpenGL::present() {
 	glfwPollEvents();
 }
+
+
+size_t OpenGL::numInstance = 0;
 
 
 unsigned int OpenGL::createShaderModule(

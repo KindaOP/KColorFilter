@@ -106,7 +106,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(ProjectDir)header;$(SolutionDir)..\DEPS\c\glfw-3.3.8-win64\include;$(SolutionDir)..\DEPS\cpp\glm-0.9.9.8-header;$(SolutionDIr)..\DEPS\c\glew-2.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)header;$(ProjectDir)external\imgui_docking-1.89.9-source;$(SolutionDir)..\DEPS\c\glfw-3.3.8-win64\include;$(SolutionDir)..\DEPS\cpp\glm-0.9.9.8-header;$(SolutionDIr)..\DEPS\c\glew-2.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -125,7 +125,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(ProjectDir)header;$(SolutionDir)..\DEPS\c\glfw-3.3.8-win64\include;$(SolutionDir)..\DEPS\cpp\glm-0.9.9.8-header;$(SolutionDIr)..\DEPS\c\glew-2.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)header;$(ProjectDir)external\imgui_docking-1.89.9-source;$(SolutionDir)..\DEPS\c\glfw-3.3.8-win64\include;$(SolutionDir)..\DEPS\cpp\glm-0.9.9.8-header;$(SolutionDIr)..\DEPS\c\glew-2.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -137,6 +137,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="external\imgui_docking-1.89.9-source\backends\imgui_impl_glfw.cpp" />
+    <ClCompile Include="external\imgui_docking-1.89.9-source\backends\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="external\imgui_docking-1.89.9-source\imgui.cpp" />
+    <ClCompile Include="external\imgui_docking-1.89.9-source\imgui_demo.cpp" />
+    <ClCompile Include="external\imgui_docking-1.89.9-source\imgui_draw.cpp" />
+    <ClCompile Include="external\imgui_docking-1.89.9-source\imgui_tables.cpp" />
+    <ClCompile Include="external\imgui_docking-1.89.9-source\imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\application.cpp" />
     <ClCompile Include="src\renderer\directx12.cpp" />
@@ -145,6 +152,14 @@
     <ClCompile Include="src\renderer\vulkan.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="external\imgui_docking-1.89.9-source\backends\imgui_impl_glfw.h" />
+    <ClInclude Include="external\imgui_docking-1.89.9-source\backends\imgui_impl_opengl3.h" />
+    <ClInclude Include="external\imgui_docking-1.89.9-source\imconfig.h" />
+    <ClInclude Include="external\imgui_docking-1.89.9-source\imgui.h" />
+    <ClInclude Include="external\imgui_docking-1.89.9-source\imgui_internal.h" />
+    <ClInclude Include="external\imgui_docking-1.89.9-source\imstb_rectpack.h" />
+    <ClInclude Include="external\imgui_docking-1.89.9-source\imstb_textedit.h" />
+    <ClInclude Include="external\imgui_docking-1.89.9-source\imstb_truetype.h" />
     <ClInclude Include="header\application.h" />
     <ClInclude Include="header\renderer\directx12.h" />
     <ClInclude Include="header\renderer\opengl.h" />
