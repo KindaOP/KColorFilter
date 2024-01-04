@@ -2,9 +2,7 @@
 
 
 int main() {
-	kop::Application app(
-		kop::Application::Backend::OPENGL
-	);
+	kop::Application app;
 	app.run();
 	return 0;
 }

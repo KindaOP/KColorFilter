@@ -1,6 +1,8 @@
 #pragma once
 #include "renderer.h"
 
+#define __KOP_RENDERER_TYPE__ Vulkan
+
 
 namespace kop {
 
