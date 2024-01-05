@@ -70,6 +70,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\KCF</OutDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -115,8 +118,12 @@
       <AdditionalDependencies>glfw3.lib;OpenGL32.lib;glew32s.lib;opencv_world460d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(SolutionDir)..\DEPS\cpp\opencv-4.6.0-win64\build\x64\vc15\bin\opencv_world460d.dll $(OutDir)</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>copy $(SolutionDir)..\DEPS\cpp\opencv-4.6.0-win64\build\x64\vc15\bin\opencv_world460d.dll $(OutDir)</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -140,8 +147,12 @@
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
     </Link>
     <PostBuildEvent>
-      <Command>copy $(SolutionDir)..\DEPS\cpp\opencv-4.6.0-win64\build\x64\vc15\bin\opencv_world460.dll $(OutDir) &amp;&amp; xcopy /E/H/C/I/Y $(ProjectDir)resource $(OutDir)KCF</Command>
+      <Command>
+      </Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>xcopy /E/H/C/I/Y $(ProjectDir)resource $(OutDir) &amp;&amp; copy $(SolutionDir)..\DEPS\cpp\opencv-4.6.0-win64\build\x64\vc15\bin\opencv_world460.dll $(OutDir)</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="external\imgui_docking-1.89.9-source\backends\imgui_impl_glfw.cpp" />

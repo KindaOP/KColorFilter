@@ -3,7 +3,7 @@
 #include <string>
 
 #ifdef NDEBUG
-const std::string SHADER_ROOT = "./KCF/shader/src/";
+const std::string SHADER_ROOT = "./shader/src/";
 #else
 const std::string SHADER_ROOT = "./resource/shader/src/";
 #endif
