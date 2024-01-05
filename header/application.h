@@ -20,9 +20,8 @@ namespace kop {
 		void setActive(bool newState);
 		int getWidth() const;
 		int getHeight() const;
-	public:
-		mutable std::mutex frameLocker;
-		cv::Mat rgbFrame = cv::Mat();
+		void getFrame(cv::Mat& image) const;
+		void openSettings();
 	private:
 		void streamingThreadLoop();
 	private:
@@ -32,6 +31,8 @@ namespace kop {
 		cv::VideoCapture camera;
 		mutable std::mutex activeLocker;
 		bool stateActive = false;
+		mutable std::mutex frameLocker;
+		cv::Mat rgbFrame = cv::Mat();
 	};
 
 
@@ -52,14 +53,17 @@ namespace kop {
 		Renderer* renderer = nullptr;
 		ImGuiWindowFlags imguiWindowFlags = NULL;
 		ImGuiColorEditFlags imguiColorEditFlags = NULL;
-		std::array<float, 3> inLowerHSV = { 0.6f, 1.0f, 1.0f };
+		std::array<float, 3> inLowerHSV = { 0.6f, 0.0f, 0.0f };
 		std::array<float, 3> inUpperHSV = { 0.7f, 1.0f, 1.0f };
 		std::array<float, 3> outLowerHSV = { NULL, NULL, NULL };
 		std::array<float, 3> outUpperHSV = { NULL, NULL, NULL };
+		cv::Mat rgbFrame = cv::Mat();
 		cv::Mat hsvImage = cv::Mat();
 		cv::Mat hsvMask = cv::Mat();
-		Object originalFrameRect;
-		Object filteredFrameRect;
+		cv::Mat originalFrame;
+		cv::Mat filteredFrame;
+		Object originalRect;
+		Object filteredRect;
 	};
 
 }

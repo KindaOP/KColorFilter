@@ -32,6 +32,7 @@ OpenGL::OpenGL(
 	this->createShaderProgram();
 	this->createVertexArray();
 	this->createVertexBuffers();
+	this->createTextures();
 	if (OpenGL::numInstance == 0) {
 		ImGui_ImplGlfw_InitForOpenGL(this->window, true);
 		ImGui_ImplOpenGL3_Init("#version 460");
@@ -98,6 +99,19 @@ bool OpenGL::add(const Object& obj) {
 	);
 	this->vertexOffset += numVertices;
 	this->elementOffset += numElements;
+	return true;
+}
+
+
+bool OpenGL::updateTexture(const void* data, size_t index) {
+	if (!data || index < 0 || index >= Renderer::maxTextures) {
+		return false;
+	}
+	glTextureSubImage3D(
+		this->tex, 0, 0, 0, index, this->textureWidth, this->textureHeight,
+		1, GL_RGBA, GL_UNSIGNED_BYTE, data
+	);
+	glGenerateTextureMipmap(this->tex);
 	return true;
 }
 
@@ -206,6 +220,7 @@ void OpenGL::createTextures() {
 	);
 	glTextureParameteri(this->tex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTextureParameteri(this->tex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glBindTextureUnit(0, this->tex);
 }
 
 

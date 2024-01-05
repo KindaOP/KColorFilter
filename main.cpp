@@ -31,7 +31,7 @@ const char* FRAGMENT_SHADER_NAME = "directx12.frag";
 int main() {
 	const std::string vertexShaderPath = SHADER_ROOT + VERTEX_SHADER_NAME;
 	const std::string fragmentSahderPath = SHADER_ROOT + FRAGMENT_SHADER_NAME;
-	kop::Webcam webcam(0, 10000, 10000);
+	kop::Webcam webcam(0, 720, 480);
 	kop::__KOP_BACKEND_TYPE__ renderer(
 		vertexShaderPath.c_str(), fragmentSahderPath.c_str(),
 		12, 12, webcam.getWidth(), webcam.getHeight()

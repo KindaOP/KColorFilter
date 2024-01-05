@@ -21,6 +21,7 @@ namespace kop {
 		void setViewport(int width, int height) override;
 		void clear() override;
 		bool add(const Object& obj) override;
+		bool updateTexture(const void* data, size_t index) override;
 		void render() override;
 		void present() override;
 	private:

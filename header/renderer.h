@@ -53,7 +53,6 @@ namespace kop {
 	public:
 		std::vector<Vertex> vboData = {};
 		std::vector<unsigned int> eboData = {};
-		cv::Mat textureImage;
 	public:
 		void applyTransform();
 		const std::vector<Vertex>& getTransformedData() const;
@@ -78,10 +77,12 @@ namespace kop {
 		virtual void setViewport(int width, int height) = 0;
 		virtual void clear() = 0;
 		virtual bool add(const Object& obj) = 0;
+		virtual bool updateTexture(const void* data, size_t index) = 0;
 		virtual void render() = 0;
 		virtual void present() = 0;
 	public:
 		static constexpr const size_t maxTextures = 2;
+		static const cv::Scalar nullColor;
 	public:
 		const char* vertexShaderPath;
 		const char* fragmentShaderPath;

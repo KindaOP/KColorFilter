@@ -1,18 +1,21 @@
 #version 460 core
 
 
+uniform sampler2DArray textures;
+
+
 in vec3 vertTexCoord;
 in vec4 vertColor; 
 
 
-uniform sampler2DArray textures;
+out vec4 fragColor;
 
 
 void main() {
 	if (vertTexCoord[2] < 0.0f) {
-		gl_FragColor = vertColor;
+		fragColor = vertColor;
 	}
 	else {
-		gl_FragColor = texture(textures, vertTexCoord);
+		fragColor = texture(textures, vertTexCoord);
 	}
 }
