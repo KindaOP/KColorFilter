@@ -135,8 +135,12 @@ void Webcam::threadLoop() {
 			mafCurrentOrder, mafFrame, mafBuffer
 		);
 		if (mafIsComplete) {
-			std::lock_guard<std::mutex> lock(this->frameLocker);
-			cv::cvtColor(mafFrame, this->rgbFrame, cv::COLOR_BGR2RGB);
+			{
+				std::lock_guard<std::mutex> lock(this->frameLocker);
+				cv::cvtColor(
+					mafFrame, this->rgbFrame, cv::COLOR_BGR2RGB
+				);
+			}
 		}
 	}
 }
@@ -289,18 +293,11 @@ bool Application::acquireImages() {
 		return false;
 	}
 	this->filteredFrame.setTo(Webcam::nullColor);
-	cv::cvtColor(
-		this->rgbFrame, this->originalFrame, cv::COLOR_RGB2RGBA
-	);
-	cv::cvtColor(
-		this->rgbFrame, this->hsvImage, cv::COLOR_RGB2HSV
-	);
-	cv::inRange(
-		this->hsvImage, this->outLowerHSV, this->outUpperHSV, this->hsvMask
-	);
-	cv::copyTo(
-		this->originalFrame, this->filteredFrame, this->hsvMask
-	);
+	cv::GaussianBlur(this->rgbFrame, this->blurredFrame, { 5, 5 }, 5, 5);
+	cv::cvtColor(this->blurredFrame, this->originalFrame, cv::COLOR_RGB2RGBA);
+	cv::cvtColor(this->blurredFrame, this->hsvImage, cv::COLOR_RGB2HSV);
+	cv::inRange(this->hsvImage, this->outLowerHSV, this->outUpperHSV, this->hsvMask);
+	cv::copyTo(this->originalFrame, this->filteredFrame, this->hsvMask);
 	return true;
 }
 
@@ -341,13 +338,14 @@ void Application::addGUIColorPickers() {
 
 
 void Application::addGUIWebcamSettings() {
+	const float windowWidth = ImGui::GetWindowWidth();
 	ImGui::SeparatorText("Webcam");
-	ImGui::PushItemWidth(0.4f * ImGui::GetWindowWidth());
+	ImGui::PushItemWidth(0.4f * windowWidth);
 	if (ImGui::Button("Settings ...")) {
 		this->webcam->openSettings();
 	}
 	ImGui::SameLine();
-	ImGui::PushItemWidth(0.6f * ImGui::GetWindowWidth());
+	ImGui::PushItemWidth(0.6f * windowWidth);
 	ImGui::SliderInt(
 		"MAF Order", &this->mafOrder, 1, 
 		Webcam::maxMafOrder, "%d", this->imguiSliderFlags

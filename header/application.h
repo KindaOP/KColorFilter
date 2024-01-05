@@ -71,9 +71,10 @@ namespace kop {
 		std::array<float, 3> inUpperHSV = { 0.15f, 1.00f, 1.00f };
 		std::array<float, 3> outLowerHSV = { NULL, NULL, NULL };
 		std::array<float, 3> outUpperHSV = { NULL, NULL, NULL };
-		cv::Mat rgbFrame = cv::Mat();
-		cv::Mat hsvImage = cv::Mat();
-		cv::Mat hsvMask = cv::Mat();
+		cv::Mat rgbFrame;
+		cv::Mat blurredFrame;
+		cv::Mat hsvImage;
+		cv::Mat hsvMask;
 		cv::Mat originalFrame;
 		cv::Mat filteredFrame;
 		Object originalRect;
