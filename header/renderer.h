@@ -1,6 +1,7 @@
 #pragma once
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <opencv2/core.hpp>
 #include <backends/imgui_impl_glfw.h>
 #include <array>
 #include <vector>
@@ -50,6 +51,7 @@ namespace kop {
 	public:
 		std::vector<Vertex> vboData = {};
 		std::vector<unsigned int> eboData = {};
+		cv::Mat textureImage;
 	public:
 		void applyTransform();
 		const std::vector<Vertex>& getTransformedData() const;

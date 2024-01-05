@@ -106,14 +106,17 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(ProjectDir)header;$(ProjectDir)external\imgui_docking-1.89.9-source;$(SolutionDir)..\DEPS\c\glfw-3.3.8-win64\include;$(SolutionDir)..\DEPS\cpp\glm-0.9.9.8-header;$(SolutionDIr)..\DEPS\c\glew-2.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)header;$(ProjectDir)external\imgui_docking-1.89.9-source;$(SolutionDir)..\DEPS\c\glfw-3.3.8-win64\include;$(SolutionDir)..\DEPS\cpp\glm-0.9.9.8-header;$(SolutionDir)..\DEPS\cpp\opencv-4.6.0-win64\build\include;$(SolutionDIr)..\DEPS\c\glew-2.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\DEPS\c\glfw-3.3.8-win64\lib-vc2022;$(SolutionDir)..\DEPS\c\glew-2.1.0\lib\Release\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OpenGL32.lib;glfw3.lib;glew32s.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\DEPS\c\glfw-3.3.8-win64\lib-vc2022;$(SolutionDir)..\DEPS\cpp\opencv-4.6.0-win64\build\x64\vc15\lib;$(SolutionDir)..\DEPS\c\glew-2.1.0\lib\Release\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3.lib;OpenGL32.lib;glew32s.lib;opencv_world460d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>copy $(SolutionDir)..\DEPS\cpp\opencv-4.6.0-win64\build\x64\vc15\bin\opencv_world460d.dll $(OutDir)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -125,19 +128,19 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(ProjectDir)header;$(ProjectDir)external\imgui_docking-1.89.9-source;$(SolutionDir)..\DEPS\c\glfw-3.3.8-win64\include;$(SolutionDir)..\DEPS\cpp\glm-0.9.9.8-header;$(SolutionDIr)..\DEPS\c\glew-2.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)header;$(ProjectDir)external\imgui_docking-1.89.9-source;$(SolutionDir)..\DEPS\c\glfw-3.3.8-win64\include;$(SolutionDir)..\DEPS\cpp\glm-0.9.9.8-header;$(SolutionDir)..\DEPS\cpp\opencv-4.6.0-win64\build\include;$(SolutionDIr)..\DEPS\c\glew-2.1.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\DEPS\c\glfw-3.3.8-win64\lib-vc2022;$(SolutionDir)..\DEPS\c\glew-2.1.0\lib\Release\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OpenGL32.lib;glfw3.lib;glew32s.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\DEPS\c\glfw-3.3.8-win64\lib-vc2022;$(SolutionDir)..\DEPS\cpp\opencv-4.6.0-win64\build\x64\vc15\lib;$(SolutionDir)..\DEPS\c\glew-2.1.0\lib\Release\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3.lib;OpenGL32.lib;glew32s.lib;opencv_world460.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /E/H/C/I/Y $(ProjectDir)resource $(OutDir)KCF</Command>
+      <Command>copy $(SolutionDir)..\DEPS\cpp\opencv-4.6.0-win64\build\x64\vc15\bin\opencv_world460.dll $(OutDir) &amp;&amp; xcopy /E/H/C/I/Y $(ProjectDir)resource $(OutDir)KCF</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
