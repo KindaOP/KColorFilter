@@ -29,14 +29,14 @@ OpenGL::OpenGL(
 	  )
 {
 	this->createWindow();
-	this->createShaderProgram();
-	this->createVertexArray();
-	this->createVertexBuffers();
-	this->createTextures();
 	if (OpenGL::numInstances == 0) {
 		ImGui_ImplGlfw_InitForOpenGL(this->window, true);
 		ImGui_ImplOpenGL3_Init("#version 460");
 	}
+	this->createShaderProgram();
+	this->createVertexArray();
+	this->createVertexBuffers();
+	this->createTextures();
 	OpenGL::numInstances += 1;
 }
 
