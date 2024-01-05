@@ -41,7 +41,8 @@ namespace kop {
 		~Application() = default;
 		void run();
 	private:
-		void createRectangles();
+		void createOriginalRect();
+		void createFilteredRect();
 		bool acquireImages();
 		void initGUIFrame() const;
 		void addGUIColorPickers();

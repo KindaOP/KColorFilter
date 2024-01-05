@@ -108,7 +108,8 @@ Application::Application(Webcam& webcam, Renderer& renderer)
 
 void Application::run() {
 	this->webcam->setActive(true);
-	this->createRectangles();
+	this->createOriginalRect();
+	this->createFilteredRect();
 	GLFWwindow* window = this->renderer->getWindow();
 	bool imagesAreAcquired = false;
 	while (!imagesAreAcquired) {
@@ -137,12 +138,28 @@ void Application::run() {
 }
 
 
-void Application::createRectangles() {
+void Application::createOriginalRect() {
 	this->originalFrameRect.vboData = {
-		{{0.5f, 0.5f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
-		{{-0.5f, 0.5f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
-		{{-0.5f, -0.5f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
-		{{0.5f, -0.5f, 0.0f, 1.0f}, {1.0f, 1.0f, 0.0f, 1.0f}},
+		{
+			{0.5f, 0.5f, 0.0f, 1.0f},
+			{1.0f, 1.0f, 0.0f},
+			{1.0f, 0.0f, 0.0f, 1.0f},
+		},
+		{
+			{-0.5f, 0.5f, 0.0f, 1.0f},
+			{0.0f, 1.0f, 0.0f},
+			{0.0f, 0.0f, 1.0f, 1.0f},
+		},
+		{
+			{-0.5f, -0.5f, 0.0f, 1.0f},
+			{0.0f, 0.0f, 0.0f},
+			{0.0f, 1.0f, 0.0f, 1.0f},
+		},
+		{
+			{0.5f, -0.5f, 0.0f, 1.0f},
+			{1.0f, 0.0f, 0.0f},
+			{1.0f, 1.0f, 0.0f, 1.0f},
+		},
 	};
 	this->originalFrameRect.eboData = {
 		0, 1, 2,
@@ -151,12 +168,31 @@ void Application::createRectangles() {
 	this->originalFrameRect.move({ -0.5f, 0.0f, 0.0f });
 	this->originalFrameRect.scale({ 1.0f, 2.0f, 1.0f });
 	this->originalFrameRect.applyTransform();
+}
 
+
+void Application::createFilteredRect() {
 	this->filteredFrameRect.vboData = {
-		{{0.5f, 0.5f, 0.0f, 1.0f}, {0.0f, 1.0f, 1.0f, 1.0f}},
-		{{-0.5f, 0.5f, 0.0f, 1.0f}, {1.0f, 1.0f, 0.0f, 1.0f}},
-		{{-0.5f, -0.5f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f, 1.0f}},
-		{{0.5f, -0.5f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
+		{
+			{0.5f, 0.5f, 0.0f, 1.0f},
+			{1.0f, 1.0f, 1.0f},
+			{0.0f, 1.0f, 1.0f, 1.0f},
+		},
+		{
+			{-0.5f, 0.5f, 0.0f, 1.0f},
+			{0.0f, 1.0f, 1.0f},
+			{1.0f, 1.0f, 0.0f, 1.0f},
+		},
+		{
+			{-0.5f, -0.5f, 0.0f, 1.0f},
+			{0.0f, 0.0f, 1.0f},
+			{1.0f, 0.0f, 1.0f, 1.0f},
+		},
+		{
+			{0.5f, -0.5f, 0.0f, 1.0f},
+			{1.0f, 0.0f, 1.0f},
+			{0.0f, 0.0f, 1.0f, 1.0f},
+		},
 	};
 	this->filteredFrameRect.eboData = {
 		0, 1, 2,
