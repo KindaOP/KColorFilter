@@ -82,7 +82,6 @@ namespace kop {
 		virtual void present() = 0;
 	public:
 		static constexpr const size_t maxTextures = 2;
-		static const cv::Scalar nullColor;
 	public:
 		const char* vertexShaderPath;
 		const char* fragmentShaderPath;

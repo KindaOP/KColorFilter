@@ -49,7 +49,7 @@ bool Webcam::isActive() const {
 void Webcam::setActive(bool newState) {
 	std::lock_guard<std::mutex> lock(this->activeLocker);
 	if (newState && !this->stateActive) {
-		std::thread th(&Webcam::streamingThreadLoop, this);
+		std::thread th(&Webcam::streamingThread, this);
 		th.detach();
 	}
 	else if (!newState && this->stateActive) {
@@ -82,7 +82,19 @@ void Webcam::openSettings() {
 }
 
 
-void Webcam::streamingThreadLoop() {
+void Webcam::setMafOrder(size_t order) {
+	std::lock_guard<std::mutex> lock(this->orderLocker);
+	if (order < 0 || order >= Webcam::maxMafOrder) {
+		return;
+	}
+	this->mafOrder = order;
+}
+
+
+const cv::Scalar Webcam::nullColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+
+void Webcam::streamingThread() {
 	this->camera.open(this->cameraId);
 	if (!this->camera.isOpened()) {
 		this->camera.release();
@@ -90,19 +102,60 @@ void Webcam::streamingThreadLoop() {
 	}
 	this->camera.set(cv::CAP_PROP_FRAME_WIDTH, this->width);
 	this->camera.set(cv::CAP_PROP_FRAME_HEIGHT, this->height);
-	cv::Mat bgrFrame;
 	{
 		std::lock_guard<std::mutex> lock(this->activeLocker);
 		this->stateActive = true;
 	}
-	while (this->camera.isOpened() && this->isActive()) {
-		this->camera >> bgrFrame;
-		{
-			std::lock_guard<std::mutex> lock(this->frameLocker);
-			cv::cvtColor(bgrFrame, this->rgbFrame, cv::COLOR_BGR2RGB);
-		}
+	this->threadLoop();
+	{
+		std::lock_guard<std::mutex> lock(this->activeLocker);
+		this->stateActive = false;
 	}
 	this->camera.release();
+}
+
+
+void Webcam::threadLoop() {
+	cv::Mat mafFrame = cv::Mat(this->height, this->width, CV_8UC3);
+	std::array<cv::Mat, Webcam::maxMafOrder> mafBuffer = {};
+	bool mafIsComplete = false;
+	size_t mafCurrentOrder = NULL;
+	size_t mafIter = 0;
+	while (this->camera.isOpened() && this->isActive()) {
+		{
+			std::lock_guard<std::mutex> lock(this->orderLocker);
+			mafCurrentOrder = this->mafOrder;
+		}
+		this->camera >> mafBuffer[mafIter];
+		mafIter += 1;
+		if (mafIter >= mafCurrentOrder) {
+			mafIter = 0;
+		}
+		mafIsComplete = this->movingAverageFilter(
+			mafCurrentOrder, mafFrame, mafBuffer
+		);
+		if (mafIsComplete) {
+			std::lock_guard<std::mutex> lock(this->frameLocker);
+			cv::cvtColor(mafFrame, this->rgbFrame, cv::COLOR_BGR2RGB);
+		}
+	}
+}
+
+
+bool Webcam::movingAverageFilter(
+	size_t order, cv::Mat& image, 
+	std::array<cv::Mat, maxMafOrder>& buffer
+) {
+	const float weight = 1.0f / order;
+	image.setTo(Webcam::nullColor);
+	for (size_t i = 0; i < order; i++) {
+		const cv::Mat& bufferImage = buffer[i];
+		if (bufferImage.empty()) {
+			return false;
+		}
+		image += weight * bufferImage;
+	}
+	return true;
 }
 
 
@@ -134,6 +187,7 @@ void Application::run() {
 	glfwShowWindow(window);
 	while (!glfwWindowShouldClose(window)) {
 		imagesAreAcquired = this->acquireImages();
+		this->webcam->setMafOrder(this->mafOrder);
 		this->renderer->clear();
 		this->initGUIFrame();
 
@@ -234,7 +288,7 @@ bool Application::acquireImages() {
 	if (this->rgbFrame.empty()) {
 		return false;
 	}
-	this->filteredFrame.setTo(Renderer::nullColor);
+	this->filteredFrame.setTo(Webcam::nullColor);
 	cv::cvtColor(
 		this->rgbFrame, this->originalFrame, cv::COLOR_RGB2RGBA
 	);

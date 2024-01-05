@@ -154,7 +154,4 @@ GLFWwindow* Renderer::getWindow() const {
 }
 
 
-const cv::Scalar Renderer::nullColor = { 0.0f, 0.0f, 0.0f, 0.0f };
-
-
 size_t Renderer::numInstances = 0;

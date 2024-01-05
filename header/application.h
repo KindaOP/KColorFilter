@@ -22,10 +22,13 @@ namespace kop {
 		int getHeight() const;
 		void getFrame(cv::Mat& image) const;
 		void openSettings();
+		void setMafOrder(size_t order);
 	public:
-		static constexpr const size_t maxMafOrder = 16;
+		static constexpr const size_t maxMafOrder = 5;
+		static const cv::Scalar nullColor;
 	private:
-		void streamingThreadLoop();
+		void streamingThread();
+		void threadLoop();
 	private:
 		unsigned int cameraId = NULL;
 		int width = NULL;
@@ -35,6 +38,13 @@ namespace kop {
 		bool stateActive = false;
 		mutable std::mutex frameLocker;
 		cv::Mat rgbFrame = cv::Mat();
+		mutable std::mutex orderLocker;
+		size_t mafOrder = 1;
+	private:
+		static bool movingAverageFilter(
+			size_t order, cv::Mat& image,
+			std::array<cv::Mat, maxMafOrder>& buffer
+		);
 	};
 
 
