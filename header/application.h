@@ -24,7 +24,7 @@ namespace kop {
 		void openSettings();
 		void setMafOrder(size_t order);
 	public:
-		static constexpr const size_t maxMafOrder = 5;
+		static constexpr size_t maxMafOrder = 5;
 		static const cv::Scalar nullColor;
 	private:
 		void streamingThread();

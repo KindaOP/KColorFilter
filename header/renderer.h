@@ -15,7 +15,7 @@ namespace kop {
 		float texCoord[3] = { 0.0f };
 		float color[4] = { 0.0f };
 	public:
-		static constexpr const std::array<size_t, 3> layout = {
+		static constexpr std::array<size_t, 3> layout = {
 			4, // position
 			3, // texture coordinate (2-D + layer)
 			4, // color
@@ -39,7 +39,7 @@ namespace kop {
 		void rotate(const glm::vec3& ypr);
 		void scale(const glm::vec3& xyz);
 	public:
-		constexpr static const glm::mat4 eye = glm::mat4(1);
+		static constexpr glm::mat4 eye = glm::mat4(1);
 	private:
 		glm::mat4 mT = glm::mat4(1);
 		glm::mat4 mR = glm::mat4(1);
@@ -79,7 +79,7 @@ namespace kop {
 		virtual void render() = 0;
 		virtual void present() = 0;
 	public:
-		static constexpr const size_t maxTextures = 2;
+		static constexpr size_t maxTextures = 2;
 	public:
 		const char* vertexShaderPath;
 		const char* fragmentShaderPath;
