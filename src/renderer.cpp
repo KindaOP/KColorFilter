@@ -140,6 +140,7 @@ Renderer::Renderer(
 
 
 Renderer::~Renderer() {
+	glfwDestroyWindow(this->window);
 	Renderer::numInstances -= 1;
 	if (Renderer::numInstances == 0) {
 		ImGui_ImplGlfw_Shutdown();
