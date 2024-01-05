@@ -22,6 +22,8 @@ namespace kop {
 		int getHeight() const;
 		void getFrame(cv::Mat& image) const;
 		void openSettings();
+	public:
+		static constexpr const size_t maxMafOrder = 16;
 	private:
 		void streamingThreadLoop();
 	private:
@@ -47,14 +49,16 @@ namespace kop {
 		bool acquireImages();
 		void initGUIFrame() const;
 		void addGUIColorPickers();
+		void addGUIWebcamSettings();
 		void renderGUIFrame() const;
 	private:
 		Webcam* webcam = nullptr;
 		Renderer* renderer = nullptr;
 		ImGuiWindowFlags imguiWindowFlags = NULL;
 		ImGuiColorEditFlags imguiColorEditFlags = NULL;
-		std::array<float, 3> inLowerHSV = { 0.6f, 0.0f, 0.0f };
-		std::array<float, 3> inUpperHSV = { 0.7f, 1.0f, 1.0f };
+		ImGuiSliderFlags imguiSliderFlags = NULL;
+		std::array<float, 3> inLowerHSV = { 0.00f, 0.20f, 0.20f };
+		std::array<float, 3> inUpperHSV = { 0.15f, 1.00f, 1.00f };
 		std::array<float, 3> outLowerHSV = { NULL, NULL, NULL };
 		std::array<float, 3> outUpperHSV = { NULL, NULL, NULL };
 		cv::Mat rgbFrame = cv::Mat();
@@ -64,6 +68,7 @@ namespace kop {
 		cv::Mat filteredFrame;
 		Object originalRect;
 		Object filteredRect;
+		int mafOrder = 1;
 	};
 
 }

@@ -118,6 +118,7 @@ Application::Application(Webcam& webcam, Renderer& renderer)
 	this->imguiColorEditFlags |= ImGuiColorEditFlags_InputHSV;
 	this->imguiColorEditFlags |= ImGuiColorEditFlags_DisplayHSV;
 	this->imguiColorEditFlags |= ImGuiColorEditFlags_NoLabel;
+	this->imguiSliderFlags |= ImGuiSliderFlags_AlwaysClamp;
 }
 
 
@@ -131,7 +132,6 @@ void Application::run() {
 		imagesAreAcquired = this->acquireImages();
 	}
 	glfwShowWindow(window);
-	this->webcam->openSettings();
 	while (!glfwWindowShouldClose(window)) {
 		imagesAreAcquired = this->acquireImages();
 		this->renderer->clear();
@@ -144,6 +144,7 @@ void Application::run() {
 			this->renderer->updateTexture(this->filteredFrame.data, 1);
 		}
 		this->addGUIColorPickers();
+		this->addGUIWebcamSettings();
 
 		this->renderGUIFrame();
 		this->renderer->render();
@@ -266,22 +267,37 @@ void Application::initGUIFrame() const {
 void Application::addGUIColorPickers() {
 	ImGui::SeparatorText("HSV Mask");
 	ImGui::BeginGroup();
-	ImGui::Text("Initial");
+	ImGui::Text("Lower");
 	ImGui::ColorPicker3(
 		"LowerHSV",
 		this->inLowerHSV.data(),
 		this->imguiColorEditFlags
 	);
 	ImGui::EndGroup();
-	ImGui::Spacing();
+	ImGui::SameLine();
 	ImGui::BeginGroup();
-	ImGui::Text("Final");
+	ImGui::Text("Upper");
 	ImGui::ColorPicker3(
 		"UpperHSV",
 		this->inUpperHSV.data(),
 		this->imguiColorEditFlags
 	);
 	ImGui::EndGroup();
+}
+
+
+void Application::addGUIWebcamSettings() {
+	ImGui::SeparatorText("Webcam");
+	ImGui::PushItemWidth(0.4f * ImGui::GetWindowWidth());
+	if (ImGui::Button("Settings ...")) {
+		this->webcam->openSettings();
+	}
+	ImGui::SameLine();
+	ImGui::PushItemWidth(0.6f * ImGui::GetWindowWidth());
+	ImGui::SliderInt(
+		"MAF Order", &this->mafOrder, 1, 
+		Webcam::maxMafOrder, "%d", this->imguiSliderFlags
+	);
 }
 
 
