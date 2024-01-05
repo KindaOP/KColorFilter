@@ -67,12 +67,6 @@ int Webcam::getHeight() const {
 }
 
 
-void Webcam::getFrame(cv::Mat& image) {
-	std::lock_guard<std::mutex> lock(this->frameLocker);
-	this->rgbFrame.copyTo(image);
-}
-
-
 void Webcam::streamingThreadLoop() {
 	this->camera.open(this->cameraId);
 	if (!this->camera.isOpened()) {
@@ -97,8 +91,9 @@ void Webcam::streamingThreadLoop() {
 }
 
 
-Application::Application(Renderer& renderer) 
-	: renderer(&renderer)
+Application::Application(Webcam& webcam, Renderer& renderer) 
+	: webcam(&webcam),
+	  renderer(&renderer)
 {
 	this->imguiWindowFlags |= ImGuiWindowFlags_AlwaysAutoResize;
 	this->imguiWindowFlags |= ImGuiWindowFlags_NoNavInputs;
@@ -112,7 +107,7 @@ Application::Application(Renderer& renderer)
 
 
 void Application::run() {
-	this->webcam.setActive(true);
+	this->webcam->setActive(true);
 	this->createRectangles();
 	GLFWwindow* window = this->renderer->getWindow();
 	bool imagesAreAcquired = false;
@@ -138,7 +133,7 @@ void Application::run() {
 	
 	// End
 	glfwHideWindow(window);
-	this->webcam.setActive(false);
+	this->webcam->setActive(false);
 }
 
 
@@ -180,14 +175,20 @@ bool Application::acquireImages() {
 	this->outUpperHSV[0] = 180.0f * this->inUpperHSV[0];
 	this->outUpperHSV[1] = 255.0f * this->inUpperHSV[1];
 	this->outUpperHSV[2] = 255.0f * this->inUpperHSV[2];
-	this->webcam.getFrame(this->originalFrameRect.textureImage);
-	if (this->originalFrameRect.textureImage.empty()) {
+	if (this->webcam->rgbFrame.empty()) {
 		return false;
 	}
-	cv::cvtColor(
-		this->originalFrameRect.textureImage,
-		this->hsvImage, cv::COLOR_RGB2HSV
-	);
+	else {
+		std::lock_guard<std::mutex> lock(this->webcam->frameLocker);
+		cv::cvtColor(
+			this->webcam->rgbFrame,
+			this->originalFrameRect.textureImage, cv::COLOR_RGB2RGBA
+		);
+		cv::cvtColor(
+			this->webcam->rgbFrame, 
+			this->hsvImage, cv::COLOR_RGB2HSV
+		);
+	}
 	cv::inRange(
 		this->hsvImage, this->outLowerHSV,
 		this->outUpperHSV, this->hsvMask

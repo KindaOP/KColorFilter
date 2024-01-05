@@ -19,9 +19,14 @@ OpenGL::OpenGL(
 	const char* vertexShaderPath,
 	const char* fragmentShaderPath,
 	size_t maxVertices,
-	size_t maxElements
+	size_t maxElements,
+	int textureWidth,
+	int textureHeight
 ) 
-	: Renderer(vertexShaderPath, fragmentShaderPath, maxVertices, maxElements)
+	: Renderer(
+		vertexShaderPath, fragmentShaderPath, maxVertices, maxElements,
+		textureWidth, textureHeight
+	  )
 {
 	this->createWindow();
 	this->createShaderProgram();
@@ -36,6 +41,7 @@ OpenGL::OpenGL(
 
 
 OpenGL::~OpenGL() {
+	glDeleteTextures(1, &this->tex);
 	glDeleteBuffers(1, &this->vbo);
 	glDeleteBuffers(1, &this->ebo);
 	glDeleteVertexArrays(1, &this->vao);
@@ -56,6 +62,57 @@ void OpenGL::setViewport(int width, int height) {
 	glViewport(0, 0, width, height);
 	this->windowWidth = width;
 	this->windowHeight = height;
+}
+
+
+void OpenGL::clear() {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	this->vertexOffset = 0;
+	this->elementOffset = 0;
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+}
+
+
+bool OpenGL::add(const Object& obj) {
+	const size_t numVertices = obj.getTransformedData().size();
+	const size_t numElements = obj.eboData.size();
+	if (
+		this->vertexOffset + numVertices > this->maxVertices ||
+		this->elementOffset + numElements > this->maxElements
+	) {
+		return false;
+	}
+	std::vector<unsigned int> shiftedEboData(obj.eboData);
+	for (unsigned int& element : shiftedEboData) {
+		element += this->vertexOffset;
+	}
+	glNamedBufferSubData(
+		this->vbo, this->vertexOffset * sizeof(Vertex),
+		numVertices * sizeof(Vertex), obj.getTransformedData().data()
+	);
+	glNamedBufferSubData(
+		this->ebo, this->elementOffset * sizeof(unsigned int),
+		numElements * sizeof(unsigned int), shiftedEboData.data()
+	);
+	this->vertexOffset += numVertices;
+	this->elementOffset += numElements;
+	return true;
+}
+
+
+void OpenGL::render() {
+	glDrawElements(
+		GL_TRIANGLES, this->elementOffset, GL_UNSIGNED_INT, nullptr
+	);
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+
+void OpenGL::present() {
+	glfwSwapBuffers(this->window);
+	glfwPollEvents();
 }
 
 
@@ -141,54 +198,14 @@ void OpenGL::createVertexBuffers() {
 }
 
 
-void OpenGL::clear() {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	this->vertexOffset = 0;
-	this->elementOffset = 0;
-	ImGui_ImplOpenGL3_NewFrame();
-	ImGui_ImplGlfw_NewFrame();
-}
-
-
-bool OpenGL::add(const Object& obj) {
-	const size_t numVertices = obj.getTransformedData().size();
-	const size_t numElements = obj.eboData.size();
-	if (
-		this->vertexOffset + numVertices > this->maxVertices ||
-		this->elementOffset + numElements > this->maxElements
-	) {
-		return false;
-	}
-	std::vector<unsigned int> shiftedEboData(obj.eboData);
-	for (unsigned int& element : shiftedEboData) {
-		element += this->vertexOffset;
-	}
-	glNamedBufferSubData(
-		this->vbo, this->vertexOffset * sizeof(Vertex),
-		numVertices * sizeof(Vertex), obj.getTransformedData().data()
+void OpenGL::createTextures() {
+	glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &this->tex);
+	glTextureStorage3D(
+		this->tex, 1, GL_RGBA8, this->textureWidth, 
+		this->textureHeight, Renderer::maxTextures
 	);
-	glNamedBufferSubData(
-		this->ebo, this->elementOffset * sizeof(unsigned int),
-		numElements * sizeof(unsigned int), shiftedEboData.data()
-	);
-	this->vertexOffset += numVertices;
-	this->elementOffset += numElements;
-	return true;
-}
-
-
-void OpenGL::render() {
-	glDrawElements(
-		GL_TRIANGLES, this->elementOffset, GL_UNSIGNED_INT, nullptr
-	);
-	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-}
-
-
-void OpenGL::present() {
-	glfwSwapBuffers(this->window);
-	glfwPollEvents();
+	glTextureParameteri(this->tex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTextureParameteri(this->tex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 }
 
 
@@ -217,7 +234,7 @@ unsigned int OpenGL::createShaderModule(
 	const unsigned int id = glCreateShader(shaderType);
 	std::string source = ss.str();
 	const char* src = source.c_str();
-	glShaderSource(id, 1, &src, 0);
+	glShaderSource(id, 1, &src, NULL);
 	glCompileShader(id);
 	return id;
 }

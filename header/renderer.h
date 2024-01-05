@@ -66,7 +66,9 @@ namespace kop {
 			const char* vertexShaderPath,
 			const char* fragmentShaderPath,
 			size_t maxVertices,
-			size_t maxElements
+			size_t maxElements,
+			int textureWidth,
+			int textureHeight
 		);
 		virtual ~Renderer();
 		GLFWwindow* getWindow() const;
@@ -77,14 +79,19 @@ namespace kop {
 		virtual void render() = 0;
 		virtual void present() = 0;
 	public:
+		static constexpr const size_t maxTextures = 2;
+	public:
 		const char* vertexShaderPath;
 		const char* fragmentShaderPath;
 		const size_t maxVertices;
 		const size_t maxElements;
+		const int textureWidth;
+		const int textureHeight;
 	protected:
 		virtual void createWindow() = 0;
 		virtual void createShaderProgram() = 0;
 		virtual void createVertexBuffers() = 0;
+		virtual void createTextures() = 0;
 	protected:
 		GLFWwindow* window = nullptr;
 		int windowWidth = 800;

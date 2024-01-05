@@ -115,12 +115,16 @@ Renderer::Renderer(
 	const char* vertexShaderPath,
 	const char* fragmentShaderPath,
 	size_t maxVertices,
-	size_t maxElements
+	size_t maxElements,
+	int textureWidth,
+	int textureHeight
 ) 
 	: vertexShaderPath(vertexShaderPath),
 	  fragmentShaderPath(fragmentShaderPath),
 	  maxVertices(maxVertices),
-	  maxElements(maxElements)
+	  maxElements(maxElements),
+	  textureWidth(textureWidth),
+	  textureHeight(textureHeight)
 {
 	if (Renderer::numInstances == 0) {
 		if (!glfwInit()) {

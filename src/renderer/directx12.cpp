@@ -7,10 +7,13 @@ DirectX12::DirectX12(
 	const char* vertexShaderPath,
 	const char* fragmentShaderPath,
 	size_t maxVertices,
-	size_t maxElements
+	size_t maxElements,
+	int textureWidth,
+	int textureHeight
 ) 
 	: Renderer(
-		vertexShaderPath, fragmentShaderPath, maxVertices, maxElements
+		vertexShaderPath, fragmentShaderPath, maxVertices, maxElements,
+		textureWidth, textureHeight
 	  )
 {
 

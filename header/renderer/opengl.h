@@ -12,7 +12,9 @@ namespace kop {
 			const char* vertexShaderPath,
 			const char* fragmentShaderPath,
 			size_t maxVertices,
-			size_t maxElements
+			size_t maxElements,
+			int textureWidth,
+			int textureHeight
 		);
 		~OpenGL() override;
 		const char* getWindowName() const override;
@@ -26,11 +28,13 @@ namespace kop {
 		void createShaderProgram() override;
 		void createVertexArray();
 		void createVertexBuffers() override;
+		void createTextures() override;
 	private:
-		unsigned int shader = 0;
-		unsigned int vao = 0;
-		unsigned int vbo = 0;
-		unsigned int ebo = 0;
+		unsigned int shader = NULL;
+		unsigned int vao = NULL;
+		unsigned int vbo = NULL;
+		unsigned int ebo = NULL;
+		unsigned int tex = NULL;
 	private:
 		static size_t numInstance;
 	private:

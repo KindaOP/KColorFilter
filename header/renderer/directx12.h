@@ -10,7 +10,9 @@ namespace kop {
 			const char* vertexShaderPath,
 			const char* fragmentShaderPath,
 			size_t maxVertices,
-			size_t maxElements
+			size_t maxElements,
+			int textureWidth,
+			int textureHeight
 		);
 		~DirectX12() override;
 		const char* getWindowName() const override;
