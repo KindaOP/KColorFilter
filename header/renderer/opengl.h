@@ -37,7 +37,7 @@ namespace kop {
 		unsigned int ebo = NULL;
 		unsigned int tex = NULL;
 	private:
-		static size_t numInstance;
+		static size_t numInstances;
 	private:
 		static unsigned int createShaderModule(
 			GLenum shaderType, 

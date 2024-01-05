@@ -15,8 +15,6 @@ namespace kop {
 		float texCoord[3] = { 0.0f };
 		float color[4] = { 0.0f };
 	public:
-		// methods
-	public:
 		static constexpr const std::array<size_t, 3> layout = {
 			4, // position
 			3, // texture coordinate (2-D + layer)

@@ -33,11 +33,11 @@ OpenGL::OpenGL(
 	this->createVertexArray();
 	this->createVertexBuffers();
 	this->createTextures();
-	if (OpenGL::numInstance == 0) {
+	if (OpenGL::numInstances == 0) {
 		ImGui_ImplGlfw_InitForOpenGL(this->window, true);
 		ImGui_ImplOpenGL3_Init("#version 460");
 	}
-	OpenGL::numInstance += 1;
+	OpenGL::numInstances += 1;
 }
 
 
@@ -47,8 +47,8 @@ OpenGL::~OpenGL() {
 	glDeleteBuffers(1, &this->ebo);
 	glDeleteVertexArrays(1, &this->vao);
 	glDeleteProgram(this->shader);
-	OpenGL::numInstance -= 1;
-	if (OpenGL::numInstance == 0) {
+	OpenGL::numInstances -= 1;
+	if (OpenGL::numInstances == 0) {
 		ImGui_ImplOpenGL3_Shutdown();
 	}
 }
@@ -224,7 +224,7 @@ void OpenGL::createTextures() {
 }
 
 
-size_t OpenGL::numInstance = 0;
+size_t OpenGL::numInstances = 0;
 
 
 unsigned int OpenGL::createShaderModule(
