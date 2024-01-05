@@ -22,8 +22,8 @@ DirectX12::~DirectX12() {
 }
 
 
-const char* DirectX12::getRendererName() const {
-	return "DirectX12";
+const char* DirectX12::getWindowName() const {
+	return "KCF-DirectX12";
 }
 
 

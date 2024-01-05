@@ -47,8 +47,8 @@ OpenGL::~OpenGL() {
 }
 
 
-const char* OpenGL::getRendererName() const {
-	return "OpenGL";
+const char* OpenGL::getWindowName() const {
+	return "KCF-OpenGL";
 }
 
 
@@ -69,7 +69,7 @@ void OpenGL::createWindow() {
 	}
 	this->window = glfwCreateWindow(
 		this->windowWidth, this->windowHeight,
-		this->getRendererName(), nullptr, nullptr
+		this->getWindowName(), nullptr, nullptr
 	);
 	glfwMakeContextCurrent(this->window);
 	if (glewInit() != GLEW_OK) {

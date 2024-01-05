@@ -42,6 +42,7 @@ namespace kop {
 		void run();
 	private:
 		void createRectangles();
+		bool acquireImages();
 		void initGUIFrame() const;
 		void addGUIColorPickers();
 		void renderGUIFrame() const;
@@ -49,8 +50,12 @@ namespace kop {
 		Renderer* renderer = nullptr;
 		ImGuiWindowFlags imguiWindowFlags = 0;
 		ImGuiColorEditFlags imguiColorEditFlags = 0;
-		std::array<float, 3> initHSV = { 0.6f, 1.0f, 1.0f };
-		std::array<float, 3> finalHSV = { 0.7f, 1.0f, 1.0f };
+		std::array<float, 3> inLowerHSV = { 0.6f, 1.0f, 1.0f };
+		std::array<float, 3> inUpperHSV = { 0.7f, 1.0f, 1.0f };
+		std::array<float, 3> outLowerHSV = { 0.0f, 0.0f, 0.0f };
+		std::array<float, 3> outUpperHSV = { 0.0f, 0.0f, 0.0f };
+		cv::Mat hsvImage = cv::Mat();
+		cv::Mat hsvMask = cv::Mat();
 		Webcam webcam = Webcam(0, 10000, 10000);
 		Object originalFrameRect;
 		Object filteredFrameRect;

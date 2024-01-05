@@ -70,7 +70,7 @@ namespace kop {
 		);
 		virtual ~Renderer();
 		GLFWwindow* getWindow() const;
-		virtual const char* getRendererName() const = 0;
+		virtual const char* getWindowName() const = 0;
 		virtual void setViewport(int width, int height) = 0;
 		virtual void clear() = 0;
 		virtual bool add(const Object& obj) = 0;

@@ -15,7 +15,7 @@ namespace kop {
 			size_t maxElements
 		);
 		~OpenGL() override;
-		const char* getRendererName() const override;
+		const char* getWindowName() const override;
 		void setViewport(int width, int height) override;
 		void clear() override;
 		bool add(const Object& obj) override;

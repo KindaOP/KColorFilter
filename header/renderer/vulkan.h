@@ -13,7 +13,7 @@ namespace kop {
 			size_t maxElements
 		);
 		~Vulkan() override;
-		const char* getRendererName() const override;
+		const char* getWindowName() const override;
 	private:
 		void createWindow() override;
 		void createShaderProgram() override;

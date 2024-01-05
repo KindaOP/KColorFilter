@@ -20,8 +20,8 @@ Vulkan::~Vulkan() {
 }
 
 
-const char* Vulkan::getRendererName() const {
-	return "Vulkan";
+const char* Vulkan::getWindowName() const {
+	return "KCF-Vulkan";
 }
 
 
