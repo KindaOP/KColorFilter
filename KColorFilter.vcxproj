@@ -134,7 +134,11 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)..\DEPS\c\glfw-3.3.8-win64\lib-vc2022;$(SolutionDir)..\DEPS\c\glew-2.1.0\lib\Release\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>OpenGL32.lib;glfw3.lib;glew32s.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /E/H/C/I/Y $(ProjectDir)resource $(OutDir)KCF</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="external\imgui_docking-1.89.9-source\backends\imgui_impl_glfw.cpp" />

@@ -11,13 +11,28 @@
 #include "renderer/directx12.h"
 #endif
 
+#ifdef NDEBUG
+const char* VERTEX_SHADER_PATH = (
+	"./KCF/shader/src/default_vert.vert"
+);
+const char* FRAGMENT_SHADER_PATH = (
+	"./KCF/shader/src/default_frag.frag"
+);
+#else
+const char* VERTEX_SHADER_PATH = (
+	"./resource/shader/src/default_vert.vert"
+);
+const char* FRAGMENT_SHADER_PATH = (
+	"./resource/shader/src/default_frag.frag"
+);
+#endif
+
 #include "application.h"
 
 
 int main() {
 	kop::__KOP_BACKEND_TYPE__ renderer(
-		"./resource/shader/src/default_vert.vert",
-		"./resource/shader/src/default_frag.frag",
+		VERTEX_SHADER_PATH, FRAGMENT_SHADER_PATH,
 		12, 12
 	);
 	kop::Application app(renderer);

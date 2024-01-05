@@ -129,7 +129,9 @@ Renderer::Renderer(
 		IMGUI_CHECKVERSION();
 	}
 	Renderer::numInstances += 1;
-	this->createGUI();
+	this->imgui = ImGui::CreateContext();
+	ImGuiIO& imguiIo = ImGui::GetIO();
+	imguiIo.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 }
 
 
@@ -145,20 +147,6 @@ Renderer::~Renderer() {
 
 GLFWwindow* Renderer::getWindow() const {
 	return this->window;
-}
-
-
-void Renderer::createGUI() {
-	this->imgui = ImGui::CreateContext();
-	ImGuiIO& imguiIo = ImGui::GetIO();
-	imguiIo.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	this->imguiWindowFlags |= ImGuiWindowFlags_AlwaysAutoResize;
-	this->imguiWindowFlags |= ImGuiWindowFlags_NoNavInputs;
-	this->imguiColorEditFlags |= ImGuiColorEditFlags_AlphaBar;
-	this->imguiColorEditFlags |= ImGuiColorEditFlags_NoSidePreview;
-	this->imguiColorEditFlags |= ImGuiColorEditFlags_PickerHueWheel;
-	this->imguiColorEditFlags |= ImGuiColorEditFlags_DisplayRGB;
-	this->imguiColorEditFlags |= ImGuiColorEditFlags_NoLabel;
 }
 
 

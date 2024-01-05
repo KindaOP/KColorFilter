@@ -83,7 +83,6 @@ namespace kop {
 		virtual void createWindow() = 0;
 		virtual void createShaderProgram() = 0;
 		virtual void createVertexBuffers() = 0;
-		void createGUI();
 	protected:
 		GLFWwindow* window = nullptr;
 		int windowWidth = 800;
@@ -91,8 +90,6 @@ namespace kop {
 		size_t vertexOffset = 0;
 		size_t elementOffset = 0;
 		ImGuiContext* imgui = nullptr;
-		ImGuiWindowFlags imguiWindowFlags = 0;
-		ImGuiColorEditFlags imguiColorEditFlags = 0;
 	private:
 		static size_t numInstances;
 	};

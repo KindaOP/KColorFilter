@@ -28,7 +28,7 @@ OpenGL::OpenGL(
 	this->createVertexArray();
 	this->createVertexBuffers();
 	if (OpenGL::numInstance == 0) {
-		ImGui_ImplGlfw_InitForOpenGL(this->window, false);
+		ImGui_ImplGlfw_InitForOpenGL(this->window, true);
 		ImGui_ImplOpenGL3_Init("#version 460");
 	}
 	OpenGL::numInstance += 1;
@@ -146,6 +146,8 @@ void OpenGL::clear() {
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	this->vertexOffset = 0;
 	this->elementOffset = 0;
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
 }
 
 
@@ -180,11 +182,12 @@ void OpenGL::render() {
 	glDrawElements(
 		GL_TRIANGLES, this->elementOffset, GL_UNSIGNED_INT, nullptr
 	);
-	glfwSwapBuffers(this->window);
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 
 void OpenGL::present() {
+	glfwSwapBuffers(this->window);
 	glfwPollEvents();
 }
 
