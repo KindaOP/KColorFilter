@@ -1,5 +1,6 @@
 #include "renderer/vulkan.h"
 #include <backends/imgui_impl_vulkan.h>
+#include <limits>
 #include <stdexcept>
 
 #ifdef NDEBUG
@@ -31,6 +32,7 @@ Vulkan::Vulkan(
 	}
 	this->createSurface();
 	this->selectPhysicalDevice();
+	this->selectCapabilities();
 	this->selectQueueFamilies();
 	this->createLogicalDevice();
 
@@ -119,8 +121,10 @@ void Vulkan::selectPhysicalDevice() {
 		vkGetPhysicalDeviceProperties(physicalDevice, &this->physicalDeviceProperties);
 		vkGetPhysicalDeviceFeatures(physicalDevice, &this->physicalDeviceFeatures);
 		if (
-			this->physicalDeviceFeatures.geometryShader	&&
-			Vulkan::checkLogicalDeviceExtensions(physicalDevice)
+			Vulkan::checkLogicalDeviceExtensions(physicalDevice) &&
+			this->checkFormat(physicalDevice) &&
+			this->checkPresentMode(physicalDevice) &&
+			this->physicalDeviceFeatures.geometryShader
 		) {
 			suitablePhysicalDeviceIsFound = true;
 			this->physicalDevice = physicalDevice;
@@ -130,6 +134,72 @@ void Vulkan::selectPhysicalDevice() {
 	if (!suitablePhysicalDeviceIsFound) {
 		throw std::runtime_error("Vulkan: Cannot find suitable GPU.");
 	}
+}
+
+
+bool Vulkan::checkFormat(const VkPhysicalDevice& physicalDevice) {
+	uint32_t formatCount = NULL;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, this->surface, &formatCount, nullptr);
+	if (formatCount == 0) {
+		return false;
+	}
+	std::vector<VkSurfaceFormatKHR> formats(formatCount);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, this->surface, &formatCount, formats.data());
+
+	this->format = formats[0];
+	for (const VkSurfaceFormatKHR& format : formats) {
+		if (
+			format.format == VK_FORMAT_B8G8R8A8_SRGB &&
+			format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+		) {
+			this->format = format;
+			break;
+		}
+	}
+	return true;
+}
+
+
+bool Vulkan::checkPresentMode(const VkPhysicalDevice& physicalDevice) {
+	uint32_t modeCount = NULL;
+	vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, this->surface, &modeCount, nullptr);
+	if (modeCount == 0) {
+		return false;
+	}
+	std::vector<VkPresentModeKHR> modes(modeCount);
+	vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, this->surface, &modeCount, modes.data());
+
+	for (const VkPresentModeKHR mode : modes) {
+		if (mode == VK_PRESENT_MODE_MAILBOX_KHR) {
+			this->presentMode = mode;
+			break;
+		}
+	}
+	return true;
+}
+
+
+void Vulkan::selectCapabilities() {
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this->physicalDevice, this->surface, &this->capabilities);
+	if (
+		this->capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max() ||
+		this->capabilities.currentExtent.height != std::numeric_limits<uint32_t>::max()
+	) {
+		return;
+	}
+	int width = NULL;
+	int height = NULL;
+	glfwGetFramebufferSize(this->window, &width, &height);
+	this->capabilities.currentExtent.width = Vulkan::clamp<uint32_t>(
+		this->capabilities.currentExtent.width,
+		this->capabilities.minImageExtent.width,
+		this->capabilities.maxImageExtent.width
+	);
+	this->capabilities.currentExtent.height = Vulkan::clamp<uint32_t>(
+		this->capabilities.currentExtent.height,
+		this->capabilities.minImageExtent.height,
+		this->capabilities.maxImageExtent.height
+	);
 }
 
 

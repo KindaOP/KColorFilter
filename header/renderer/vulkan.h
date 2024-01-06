@@ -37,6 +37,18 @@ namespace kop {
 			}
 			return result;
 		}
+		template <typename T>
+		static T clamp(T value, T vmin, T vmax) {
+			if (value < vmin) {
+				return vmin;
+			}
+			else if (value > vmax) {
+				return vmax;
+			}
+			else {
+				return value;
+			}
+		}
 	public:
 		static constexpr std::array<const char*, 1> validationLayers = {
 			"VK_LAYER_KHRONOS_validation"
@@ -49,6 +61,9 @@ namespace kop {
 		void createWindow() override;
 		void createSurface();
 		void selectPhysicalDevice();
+		bool checkFormat(const VkPhysicalDevice& physicalDevice);
+		bool checkPresentMode(const VkPhysicalDevice& physicalDevice);
+		void selectCapabilities();
 		void selectQueueFamilies();
 		void createLogicalDevice();
 		void createShaderProgram() override;
@@ -59,6 +74,9 @@ namespace kop {
 		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 		VkPhysicalDeviceProperties physicalDeviceProperties{};
 		VkPhysicalDeviceFeatures physicalDeviceFeatures{};
+		VkSurfaceFormatKHR format{};
+		VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR;
+		VkSurfaceCapabilitiesKHR capabilities{};
 		std::array<uint32_t, queueRequirementCount> queueFamilyIndices = { NULL };
 		bool allQueueFamiliesAreSame = false;
 		VkDevice logicalDevice = VK_NULL_HANDLE;
