@@ -142,6 +142,9 @@ void OpenGL::createWindow() {
 		this->windowWidth, this->windowHeight,
 		this->getWindowName(), nullptr, nullptr
 	);
+	if (this->window == nullptr) {
+		throw std::runtime_error("GLFW: Cannot create window.");
+	}
 	glfwMakeContextCurrent(this->window);
 	if (glewInit() != GLEW_OK) {
 		throw std::runtime_error("GLEW: Cannot initialize GLEW.");
