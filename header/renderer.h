@@ -89,7 +89,7 @@ namespace kop {
 		const int textureHeight;
 	protected:
 		virtual void createWindow() = 0;
-		virtual void createShaderProgram() = 0;
+		virtual void createGraphicsPipeline() = 0;
 		virtual void createVertexBuffers() = 0;
 		virtual void createTextures() = 0;
 	protected:

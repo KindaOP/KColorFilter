@@ -33,7 +33,7 @@ OpenGL::OpenGL(
 		ImGui_ImplGlfw_InitForOpenGL(this->window, true);
 		ImGui_ImplOpenGL3_Init("#version 460");
 	}
-	this->createShaderProgram();
+	this->createGraphicsPipeline();
 	this->createVertexArray();
 	this->createVertexBuffers();
 	this->createTextures();
@@ -163,7 +163,7 @@ void OpenGL::createWindow() {
 }
 
 
-void OpenGL::createShaderProgram() {
+void OpenGL::createGraphicsPipeline() {
 	this->shader = glCreateProgram();
 	const unsigned int vertexShader = OpenGL::createShaderModule(
 		GL_VERTEX_SHADER, this->vertexShaderPath

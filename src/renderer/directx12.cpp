@@ -35,6 +35,6 @@ void DirectX12::createWindow() {
 }
 
 
-void DirectX12::createShaderProgram() {
+void DirectX12::createGraphicsPipeline() {
 
 }

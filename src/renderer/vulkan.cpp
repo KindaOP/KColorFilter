@@ -350,7 +350,7 @@ void Vulkan::createImageViews() {
 }
 
 
-void Vulkan::createShaderProgram() {
+void Vulkan::createGraphicsPipeline() {
 
 }
 

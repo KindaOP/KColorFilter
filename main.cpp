@@ -3,9 +3,9 @@
 #include <string>
 
 #ifdef NDEBUG
-const std::string SHADER_ROOT = "./shader/src/";
+const std::string SHADER_ROOT = "./shader/";
 #else
-const std::string SHADER_ROOT = "./resource/shader/src/";
+const std::string SHADER_ROOT = "./resource/shader/";
 #endif
 
 #if defined(__KOP_BACKEND_OPENGL__)

@@ -26,7 +26,7 @@ namespace kop {
 		void present() override;
 	private:
 		void createWindow() override;
-		void createShaderProgram() override;
+		void createGraphicsPipeline() override;
 		void createVertexArray();
 		void createVertexBuffers() override;
 		void createTextures() override;

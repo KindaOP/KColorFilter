@@ -18,7 +18,7 @@ namespace kop {
 		const char* getWindowName() const override;
 	private:
 		void createWindow() override;
-		void createShaderProgram() override;
+		void createGraphicsPipeline() override;
 	};
 
 }

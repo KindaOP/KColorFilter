@@ -68,7 +68,7 @@ namespace kop {
 		void createLogicalDevice();
 		void createSwapchain();
 		void createImageViews();
-		void createShaderProgram() override;
+		void createGraphicsPipeline() override;
 		void createVertexBuffers() override;
 		void createTextures() override;
 	private:
