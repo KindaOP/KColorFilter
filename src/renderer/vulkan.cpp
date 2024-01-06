@@ -36,6 +36,7 @@ Vulkan::Vulkan(
 	this->selectQueueFamilies();
 	this->createLogicalDevice();
 	this->createSwapchain();
+	this->createImageViews();
 
 	// ImGui_ImplVulkan_Init(,);
 	Vulkan::numInstances += 1;
@@ -43,6 +44,9 @@ Vulkan::Vulkan(
 
 
 Vulkan::~Vulkan() {
+	for (const VkImageView& imageView : this->imageViews) {
+		vkDestroyImageView(this->logicalDevice, imageView, nullptr);
+	}
 	vkDestroySwapchainKHR(this->logicalDevice, this->swapchain, nullptr);
 	vkDestroyDevice(this->logicalDevice, nullptr);
 	vkDestroySurfaceKHR(Vulkan::instance, this->surface, nullptr);
@@ -309,6 +313,39 @@ void Vulkan::createSwapchain() {
 	);
 	if (result != VK_SUCCESS) {
 		throw std::runtime_error("Vulkan: Cannot create swapchain.");
+	}
+	uint32_t actualImageCount = NULL;
+	vkGetSwapchainImagesKHR(this->logicalDevice, this->swapchain, &actualImageCount, nullptr);
+	this->images.resize(imageCount);
+	vkGetSwapchainImagesKHR(this->logicalDevice, this->swapchain, &actualImageCount, this->images.data());
+}
+
+
+void Vulkan::createImageViews() {
+	const size_t imageCount = this->images.size();
+	this->imageViews.resize(imageCount);
+	this->imageViewInfos.resize(imageCount);
+	for (size_t i = 0; i < imageCount; i++) {
+		this->imageViewInfos[i].sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		this->imageViewInfos[i].image = this->images[i];
+		this->imageViewInfos[i].viewType = VK_IMAGE_VIEW_TYPE_2D;
+		this->imageViewInfos[i].format = this->format.format;
+		this->imageViewInfos[i].components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		this->imageViewInfos[i].components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		this->imageViewInfos[i].components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		this->imageViewInfos[i].components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+		this->imageViewInfos[i].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		this->imageViewInfos[i].subresourceRange.baseMipLevel = 0;
+		this->imageViewInfos[i].subresourceRange.levelCount = 1;
+		this->imageViewInfos[i].subresourceRange.baseArrayLayer = 0;
+		this->imageViewInfos[i].subresourceRange.layerCount = 1;
+
+		VkResult result = vkCreateImageView(
+			this->logicalDevice, &this->imageViewInfos[i], nullptr, &this->imageViews[i]
+		);
+		if (result != VK_SUCCESS) {
+			throw std::runtime_error("Vulkan: Cannot create image view.");
+		}
 	}
 }
 
