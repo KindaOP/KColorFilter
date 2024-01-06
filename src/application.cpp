@@ -148,7 +148,7 @@ void Webcam::threadLoop() {
 
 bool Webcam::movingAverageFilter(
 	size_t order, cv::Mat& image, 
-	std::array<cv::Mat, maxMafOrder>& buffer
+	const std::array<cv::Mat, maxMafOrder>& buffer
 ) {
 	const float weight = 1.0f / order;
 	image.setTo(Webcam::nullColor);

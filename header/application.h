@@ -43,7 +43,7 @@ namespace kop {
 	private:
 		static bool movingAverageFilter(
 			size_t order, cv::Mat& image,
-			std::array<cv::Mat, maxMafOrder>& buffer
+			const std::array<cv::Mat, maxMafOrder>& buffer
 		);
 	};
 
