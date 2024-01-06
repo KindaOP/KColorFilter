@@ -24,13 +24,14 @@ Vulkan::Vulkan(
 		textureWidth, textureHeight
 	  )
 {
+	this->createWindow();
 	if (Vulkan::numInstances == 0) {
 		Vulkan::createInstance();
-		// ImGui_ImplGlfw_InitForVulkan(this->window, true);
+		ImGui_ImplGlfw_InitForVulkan(this->window, true);
 	}
-	Vulkan::numInstances += 1;
 
 	// ImGui_ImplVulkan_Init(,);
+	Vulkan::numInstances += 1;
 }
 
 
@@ -80,7 +81,13 @@ void Vulkan::present() {
 void Vulkan::createWindow() {
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-
+	this->window = glfwCreateWindow(
+		this->windowWidth, this->windowHeight,
+		this->getWindowName(), nullptr, nullptr
+	);
+	if (this->window == nullptr) {
+		throw std::runtime_error("GLFW: Cannot create window.");
+	}
 }
 
 

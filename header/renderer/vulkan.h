@@ -31,6 +31,7 @@ namespace kop {
 		};
 	private:
 		void createWindow() override;
+		void selectPhysicalDevice();
 		void createShaderProgram() override;
 		void createVertexBuffers() override;
 		void createTextures() override;
