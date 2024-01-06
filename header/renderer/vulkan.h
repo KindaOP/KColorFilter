@@ -58,6 +58,10 @@ namespace kop {
 			VK_KHR_SWAPCHAIN_EXTENSION_NAME
 		};
 		static constexpr size_t queueRequirementCount = 2;	// Graphics, Present
+		static constexpr std::array<VkDynamicState, 2> dynamicStates = {
+			VK_DYNAMIC_STATE_VIEWPORT,
+			VK_DYNAMIC_STATE_SCISSOR,
+		};
 	private:
 		void createWindow() override;
 		void createSurface();
@@ -69,7 +73,19 @@ namespace kop {
 		void createLogicalDevice();
 		void createSwapchain();
 		void createImageViews();
+		void createPipelineLayout();
 		void createGraphicsPipeline() override;
+		void setPipelineShaders(
+			const VkShaderModule& vertexShader, 
+			const VkShaderModule& fragmentShader
+		);
+		void setPipelineDynamicStates();
+		void setPipelineVertexInput();
+		void setPipelineInputAssembly();
+		void setPipelineViewports();
+		void setPipelineRasterizer();
+		void setPipelineMultisampling();
+		void setPipelineColorBlending();
 		void createVertexBuffers() override;
 		void createTextures() override;
 	private:
@@ -91,6 +107,18 @@ namespace kop {
 		std::vector<VkImage> images = {};
 		std::vector<VkImageView> imageViews = {};
 		std::vector<VkImageViewCreateInfo> imageViewInfos = {};
+		std::array<VkPipelineShaderStageCreateInfo, 2> shaderInfos = { {} }; // Vertex, Fragment
+		VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+
+		VkPipelineDynamicStateCreateInfo dynamicStateInfo{};
+		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+		VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
+		VkPipelineViewportStateCreateInfo viewportInfo{};
+		VkPipelineRasterizationStateCreateInfo rasterizerInfo{};
+		VkPipelineMultisampleStateCreateInfo multisamplingInfo{};
+		VkPipelineColorBlendStateCreateInfo colorBlendingInfo{};
+		VkPipelineColorBlendAttachmentState colorBlendingAttachment{};
 	private:
 		class VulkanShaderModule {
 		public:

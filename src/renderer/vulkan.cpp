@@ -47,6 +47,7 @@ Vulkan::Vulkan(
 	this->createLogicalDevice();
 	this->createSwapchain();
 	this->createImageViews();
+	this->createPipelineLayout();
 	this->createGraphicsPipeline();
 
 	// ImGui_ImplVulkan_Init(,);
@@ -55,6 +56,7 @@ Vulkan::Vulkan(
 
 
 Vulkan::~Vulkan() {
+	vkDestroyPipelineLayout(this->logicalDevice, this->pipelineLayout, nullptr);
 	for (const VkImageView& imageView : this->imageViews) {
 		vkDestroyImageView(this->logicalDevice, imageView, nullptr);
 	}
@@ -429,9 +431,130 @@ void Vulkan::createImageViews() {
 }
 
 
+void Vulkan::createPipelineLayout() {
+	this->pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	this->pipelineLayoutInfo.setLayoutCount = 0;
+	this->pipelineLayoutInfo.pSetLayouts = nullptr;
+	this->pipelineLayoutInfo.pushConstantRangeCount = 0;
+	this->pipelineLayoutInfo.pPushConstantRanges = nullptr;
+
+	VkResult result = vkCreatePipelineLayout(
+		this->logicalDevice, &this->pipelineLayoutInfo, nullptr, &this->pipelineLayout
+	);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Vulkan: Cannot create pipeline layout.");
+	}
+}
+
+
 void Vulkan::createGraphicsPipeline() {
 	VulkanShaderModule vertexShader(this->logicalDevice, this->vertexShaderPath);
 	VulkanShaderModule fragmentShader(this->logicalDevice, this->fragmentShaderPath);
+	this->setPipelineShaders(vertexShader.handle, fragmentShader.handle);
+	this->setPipelineDynamicStates();
+	this->setPipelineVertexInput();
+	this->setPipelineInputAssembly();
+	this->setPipelineViewports();
+	this->setPipelineRasterizer();
+	this->setPipelineMultisampling();
+	this->setPipelineColorBlending();
+}
+
+
+void Vulkan::setPipelineShaders(
+	const VkShaderModule& vertexShader, const VkShaderModule& fragmentShader
+) {
+	this->shaderInfos[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	this->shaderInfos[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+	this->shaderInfos[0].module = vertexShader;
+	this->shaderInfos[0].pName = "main";
+	this->shaderInfos[0].pSpecializationInfo = nullptr;
+	this->shaderInfos[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	this->shaderInfos[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	this->shaderInfos[1].module = fragmentShader;
+	this->shaderInfos[1].pName = "main";
+	this->shaderInfos[1].pSpecializationInfo = nullptr;
+}
+
+
+void Vulkan::setPipelineDynamicStates() {
+	this->dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	this->dynamicStateInfo.dynamicStateCount = Vulkan::dynamicStates.size();
+	this->dynamicStateInfo.pDynamicStates = Vulkan::dynamicStates.data();
+}
+
+
+void Vulkan::setPipelineVertexInput() {
+	this->vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	this->vertexInputInfo.vertexBindingDescriptionCount = 0;
+	this->vertexInputInfo.pVertexBindingDescriptions = nullptr;
+	this->vertexInputInfo.vertexAttributeDescriptionCount = 0;
+	this->vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+}
+
+
+void Vulkan::setPipelineInputAssembly() {
+	this->inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	this->inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	this->inputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
+}
+
+
+void Vulkan::setPipelineViewports() {
+	this->viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	this->viewportInfo.viewportCount = 1;
+	this->viewportInfo.scissorCount = 1;
+}
+
+
+void Vulkan::setPipelineRasterizer() {
+	this->rasterizerInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	this->rasterizerInfo.depthClampEnable = VK_FALSE;
+	this->rasterizerInfo.rasterizerDiscardEnable = VK_FALSE;
+	this->rasterizerInfo.polygonMode = VK_POLYGON_MODE_FILL;
+	this->rasterizerInfo.lineWidth - 1.0f;
+	this->rasterizerInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+	this->rasterizerInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	this->rasterizerInfo.depthBiasEnable = VK_FALSE;
+	this->rasterizerInfo.depthBiasConstantFactor = 0.0f;
+	this->rasterizerInfo.depthBiasClamp = 0.0f;
+	this->rasterizerInfo.depthBiasSlopeFactor = 0.0f;
+}
+
+
+void Vulkan::setPipelineMultisampling() {
+	this->multisamplingInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	this->multisamplingInfo.sampleShadingEnable = VK_FALSE;
+	this->multisamplingInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	this->multisamplingInfo.minSampleShading = 1.0f;
+	this->multisamplingInfo.pSampleMask = nullptr;
+	this->multisamplingInfo.alphaToCoverageEnable = VK_FALSE;
+	this->multisamplingInfo.alphaToOneEnable = VK_FALSE;
+}
+
+
+void Vulkan::setPipelineColorBlending() {
+	this->colorBlendingAttachment.colorWriteMask = (
+		VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+		VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
+	);
+	this->colorBlendingAttachment.blendEnable = VK_TRUE;
+	this->colorBlendingAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+	this->colorBlendingAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	this->colorBlendingAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+	this->colorBlendingAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	this->colorBlendingAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+	this->colorBlendingAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+
+	this->colorBlendingInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	this->colorBlendingInfo.logicOpEnable = VK_FALSE;
+	this->colorBlendingInfo.logicOp = VK_LOGIC_OP_COPY;
+	this->colorBlendingInfo.attachmentCount = 1;
+	this->colorBlendingInfo.pAttachments = &this->colorBlendingAttachment;
+	this->colorBlendingInfo.blendConstants[0] = 0.0f;
+	this->colorBlendingInfo.blendConstants[1] = 0.0f;
+	this->colorBlendingInfo.blendConstants[2] = 0.0f;
+	this->colorBlendingInfo.blendConstants[3] = 0.0f;
 }
 
 
