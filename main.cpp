@@ -11,18 +11,20 @@ const std::string SHADER_ROOT = "./resource/shader/";
 #if defined(__KOP_BACKEND_OPENGL__)
 #define __KOP_BACKEND_TYPE__ OpenGL
 #include "renderer/opengl.h"
-const char* VERTEX_SHADER_NAME = "opengl.vert";
-const char* FRAGMENT_SHADER_NAME = "opengl.frag";
+const char* VERTEX_SHADER_NAME = "opengl_vert.vert";
+const char* FRAGMENT_SHADER_NAME = "opengl_frag.frag";
+
 #elif defined(__KOP_BACKEND_VULKAN__)
 #define __KOP_BACKEND_TYPE__ Vulkan
 #include "renderer/vulkan.h"
-const char* VERTEX_SHADER_NAME = "vulkan.vert";
-const char* FRAGMENT_SHADER_NAME = "vulkan.frag";
+const char* VERTEX_SHADER_NAME = "vulkan_vert.vert";
+const char* FRAGMENT_SHADER_NAME = "vulkan_frag.frag";
+
 #elif defined(__KOP_BACKEND_DIRECTX12__)
 #define __KOP_BACKEND_TYPE__ DirectX12
 #include "renderer/directx12.h"
-const char* VERTEX_SHADER_NAME = "directx12.vert";
-const char* FRAGMENT_SHADER_NAME = "directx12.frag";
+const char* VERTEX_SHADER_NAME = "directx12_vert.vert";
+const char* FRAGMENT_SHADER_NAME = "directx12_frag.frag";
 #endif
 
 #include "application.h"

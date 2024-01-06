@@ -2,6 +2,7 @@
 #include <vulkan/vulkan.h>
 #include "renderer.h"
 #include <array>
+#include <string>
 #include <vector>
 
 
@@ -90,6 +91,19 @@ namespace kop {
 		std::vector<VkImage> images = {};
 		std::vector<VkImageView> imageViews = {};
 		std::vector<VkImageViewCreateInfo> imageViewInfos = {};
+	private:
+		class VulkanShaderModule {
+		public:
+			VulkanShaderModule(const VkDevice& logicalDevice, const char* sourcePath);
+			~VulkanShaderModule();
+		public:
+			const VkDevice& logicalDevice;
+			VkShaderModule handle = VK_NULL_HANDLE;
+			VkShaderModuleCreateInfo moduleInfo{};
+		private:
+			static std::string compileSource(const char* sourcePath);
+			static void loadBinary(const char* binaryPath, std::vector<char>& buffer);
+		};
 	private:
 		static size_t numInstances;
 		static VkInstance instance;

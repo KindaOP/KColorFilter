@@ -1,12 +1,22 @@
 #include "renderer/vulkan.h"
 #include <backends/imgui_impl_vulkan.h>
+#include <filesystem>
+#include <fstream>
 #include <limits>
 #include <stdexcept>
 
 #ifdef NDEBUG
 const bool IS_DEBUG = false;
+const char* SHADER_COMPILER_PATH = "./glslc";
 #else
 const bool IS_DEBUG = true;
+const char* SHADER_COMPILER_PATH = "./external/glslc";
+#endif
+
+#ifdef _WIN32
+const bool IS_UNIX = false;
+#else
+const bool IS_UNIX = true;
 #endif
 
 using namespace kop;
@@ -37,6 +47,7 @@ Vulkan::Vulkan(
 	this->createLogicalDevice();
 	this->createSwapchain();
 	this->createImageViews();
+	this->createGraphicsPipeline();
 
 	// ImGui_ImplVulkan_Init(,);
 	Vulkan::numInstances += 1;
@@ -89,6 +100,74 @@ void Vulkan::render() {
 
 void Vulkan::present() {
 
+}
+
+
+Vulkan::VulkanShaderModule::VulkanShaderModule(
+	const VkDevice& logicalDevice, const char* sourcePath
+) 
+	: logicalDevice(logicalDevice)
+{
+	const std::string binaryPath = this->compileSource(sourcePath);
+	std::vector<char> binaryBuffer = {};
+	this->loadBinary(binaryPath.c_str(), binaryBuffer);
+
+	this->moduleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	this->moduleInfo.codeSize = binaryBuffer.size();
+	this->moduleInfo.pCode = reinterpret_cast<const uint32_t*>(binaryBuffer.data());
+	
+	VkResult result = vkCreateShaderModule(
+		logicalDevice, &this->moduleInfo, nullptr, &this->handle
+	);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Vulkan: Cannot create shader module from " + binaryPath + '.');
+	}
+}
+
+
+Vulkan::VulkanShaderModule::~VulkanShaderModule() {
+	vkDestroyShaderModule(this->logicalDevice, this->handle, nullptr);
+}
+
+
+std::string Vulkan::VulkanShaderModule::compileSource(const char* sourcePath) {
+	std::filesystem::path fCompilerPath(SHADER_COMPILER_PATH);
+	if (!IS_UNIX) {
+		fCompilerPath.concat(".exe");
+	}
+	std::filesystem::path fSourcePath(sourcePath);
+	fCompilerPath.make_preferred();
+	fSourcePath.make_preferred();
+	const std::string cPath = fCompilerPath.string();
+	const std::string sPath = fSourcePath.string();
+	const std::string bPath = fSourcePath.replace_extension().string() + ".spv";
+	const std::string compileCommand = cPath + ' ' + sPath + " -o " + bPath;
+	int result = std::system(compileCommand.c_str());
+	if (result != 0) {
+		throw std::runtime_error(
+			"Vulkan: Cannot compile shader from " + sPath + " using " + cPath + '.'
+		);
+	}
+	return bPath;
+}
+
+
+void Vulkan::VulkanShaderModule::loadBinary(
+	const char* binaryPath, std::vector<char>& buffer
+) {
+	std::filesystem::path fBinaryPath(binaryPath);
+	fBinaryPath.make_preferred();
+	const std::string bPath = fBinaryPath.string();
+	std::ifstream file(bPath, std::ios::ate | std::ios::binary);
+	if (!file.is_open()) {
+		throw std::runtime_error("Vulkan: Cannot open binary at " + bPath + '.');
+	}
+	const size_t fileSize = file.tellg();
+	buffer.clear();
+	buffer.resize(fileSize);
+	file.seekg(0);
+	file.read(buffer.data(), fileSize);
+	file.close();
 }
 
 
@@ -351,7 +430,8 @@ void Vulkan::createImageViews() {
 
 
 void Vulkan::createGraphicsPipeline() {
-
+	VulkanShaderModule vertexShader(this->logicalDevice, this->vertexShaderPath);
+	VulkanShaderModule fragmentShader(this->logicalDevice, this->fragmentShaderPath);
 }
 
 
