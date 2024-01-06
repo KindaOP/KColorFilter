@@ -74,6 +74,8 @@ namespace kop {
 		void createSwapchain();
 		void createImageViews();
 		void createPipelineLayout();
+		void createRenderPass();
+		void setColorAttachments();
 		void createGraphicsPipeline() override;
 		void setPipelineShaders(
 			const VkShaderModule& vertexShader, 
@@ -110,7 +112,11 @@ namespace kop {
 		std::array<VkPipelineShaderStageCreateInfo, 2> shaderInfos = { {} }; // Vertex, Fragment
 		VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-
+		VkRenderPass renderPass = VK_NULL_HANDLE;
+		VkRenderPassCreateInfo renderPassInfo{};
+		VkAttachmentDescription colorAttachment{};
+		VkSubpassDescription subpass{};
+		VkAttachmentReference colorAttachmentReference{};
 		VkPipelineDynamicStateCreateInfo dynamicStateInfo{};
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};

@@ -48,6 +48,7 @@ Vulkan::Vulkan(
 	this->createSwapchain();
 	this->createImageViews();
 	this->createPipelineLayout();
+	this->createRenderPass();
 	this->createGraphicsPipeline();
 
 	// ImGui_ImplVulkan_Init(,);
@@ -56,6 +57,7 @@ Vulkan::Vulkan(
 
 
 Vulkan::~Vulkan() {
+	vkDestroyRenderPass(this->logicalDevice, this->renderPass, nullptr);
 	vkDestroyPipelineLayout(this->logicalDevice, this->pipelineLayout, nullptr);
 	for (const VkImageView& imageView : this->imageViews) {
 		vkDestroyImageView(this->logicalDevice, imageView, nullptr);
@@ -444,6 +446,42 @@ void Vulkan::createPipelineLayout() {
 	if (result != VK_SUCCESS) {
 		throw std::runtime_error("Vulkan: Cannot create pipeline layout.");
 	}
+}
+
+
+void Vulkan::createRenderPass() {
+	this->setColorAttachments();
+	this->renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	this->renderPassInfo.attachmentCount = 1;
+	this->renderPassInfo.pAttachments = &this->colorAttachment;
+	this->renderPassInfo.subpassCount = 1;
+	this->renderPassInfo.pSubpasses = &this->subpass;
+
+	VkResult result = vkCreateRenderPass(
+		this->logicalDevice, &this->renderPassInfo, nullptr, &this->renderPass
+	);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Vulkan: Cannot create render pass.");
+	}
+}
+
+
+void Vulkan::setColorAttachments() {
+	this->colorAttachment.format = this->swapchainInfo.imageFormat;
+	this->colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	this->colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	this->colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	this->colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	this->colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	this->colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	this->colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	
+	this->subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	this->subpass.colorAttachmentCount = 1;
+	this->subpass.pColorAttachments = &this->colorAttachmentReference;
+	
+	this->colorAttachmentReference.attachment = 0;
+	this->colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 }
 
 
