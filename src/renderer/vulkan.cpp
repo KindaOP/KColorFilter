@@ -29,7 +29,8 @@ Vulkan::Vulkan(
 		Vulkan::createInstance();
 		ImGui_ImplGlfw_InitForVulkan(this->window, true);
 	}
-
+	this->selectPhysicalDevice();
+	this->selectQueueFamilies();
 	// ImGui_ImplVulkan_Init(,);
 	Vulkan::numInstances += 1;
 }
@@ -115,6 +116,42 @@ void Vulkan::selectPhysicalDevice() {
 	if (!suitablePhysicalDeviceIsFound) {
 		throw std::runtime_error("Vulkan: Cannot find suitable GPU.");
 	}
+}
+
+
+void Vulkan::selectQueueFamilies() {
+	uint32_t queueFamilyCount = NULL;
+	vkGetPhysicalDeviceQueueFamilyProperties(this->physicalDevice, &queueFamilyCount, nullptr);
+	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(this->physicalDevice, &queueFamilyCount, queueFamilies.data());
+
+	const size_t& indexCount = Vulkan::queueFamilyRequirementCount;
+	bool suitableQueueFamilyIsFounds[indexCount] = { false };
+	bool allSuitableQueueFamiliesAreFound = false;
+	for (size_t i = 0; i < indexCount; i++) {
+		if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+			suitableQueueFamilyIsFounds[0] = true;
+			this->queueFamilyIndices[0] = i;
+		}
+		if (!allSuitableQueueFamiliesAreFound) {
+			allSuitableQueueFamiliesAreFound = Vulkan::allAreSame<bool>(
+				suitableQueueFamilyIsFounds, indexCount, true
+			);
+		}
+		else {
+			this->allQueueFamiliesAreSame = Vulkan::allAreSame<uint32_t>(
+				this->queueFamilyIndices.data(), this->queueFamilyIndices.size(), this->queueFamilyIndices[0]
+			);
+			if (this->allQueueFamiliesAreSame) {
+				break;
+			}
+		}
+	}
+
+	if (!allSuitableQueueFamiliesAreFound) {
+		throw std::runtime_error("Vulkan: Cannot find all necessary queue families.");
+	}
+
 }
 
 

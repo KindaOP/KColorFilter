@@ -26,13 +26,26 @@ namespace kop {
 		void render() override;
 		void present() override;
 	public:
+		template <typename T>
+		static bool allAreSame(T* elements, size_t count, T value) {
+			bool result = true;
+			for (size_t i = 0; i < count; i++) {
+				if (elements[i] != value) {
+					result = false;
+					break;
+				}
+			}
+			return result;
+		}
+	public:
 		static constexpr std::array<const char*, 1> validationLayers = {
 			"VK_LAYER_KHRONOS_validation"
 		};
+		static constexpr size_t queueFamilyRequirementCount = 1;	// Graphics, Present
 	private:
 		void createWindow() override;
 		void selectPhysicalDevice();
-		void checkQueueFamilies();
+		void selectQueueFamilies();
 		void createShaderProgram() override;
 		void createVertexBuffers() override;
 		void createTextures() override;
@@ -40,6 +53,9 @@ namespace kop {
 		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 		VkPhysicalDeviceProperties physicalDeviceProperties{};
 		VkPhysicalDeviceFeatures physicalDeviceFeatures{};
+		std::array<uint32_t, queueFamilyRequirementCount> queueFamilyIndices = { 0 };
+		bool allQueueFamiliesAreSame = false;
+		std::array<VkDeviceQueueCreateInfo, queueFamilyRequirementCount> queueInfos = { {} };
 	private:
 		static size_t numInstances;
 		static VkInstance instance;
