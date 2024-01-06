@@ -119,7 +119,8 @@ void Vulkan::selectPhysicalDevice() {
 		vkGetPhysicalDeviceProperties(physicalDevice, &this->physicalDeviceProperties);
 		vkGetPhysicalDeviceFeatures(physicalDevice, &this->physicalDeviceFeatures);
 		if (
-			this->physicalDeviceFeatures.geometryShader	
+			this->physicalDeviceFeatures.geometryShader	&&
+			Vulkan::checkLogicalDeviceExtensions(physicalDevice)
 		) {
 			suitablePhysicalDeviceIsFound = true;
 			this->physicalDevice = physicalDevice;
@@ -185,6 +186,8 @@ void Vulkan::createLogicalDevice() {
 	this->logicalDeviceInfo.pQueueCreateInfos = this->queueInfos.data();
 	this->logicalDeviceInfo.queueCreateInfoCount = this->queueInfos.size();
 	this->logicalDeviceInfo.pEnabledFeatures = &this->physicalDeviceFeatures;
+	this->logicalDeviceInfo.enabledExtensionCount = Vulkan::logicalDeviceExtensions.size();
+	this->logicalDeviceInfo.ppEnabledExtensionNames = Vulkan::logicalDeviceExtensions.data();
 
 	VkResult result = vkCreateDevice(
 		this->physicalDevice, &this->logicalDeviceInfo, nullptr, &this->logicalDevice
@@ -235,7 +238,7 @@ void Vulkan::createInstance() {
 
 	Vulkan::instanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	Vulkan::instanceInfo.pApplicationInfo = &Vulkan::appInfo;
-	Vulkan::checkExtensionSupport();
+	Vulkan::checkInstanceExtensions();
 	if (IS_DEBUG) {
 		Vulkan::checkValidationLayers();
 	}
@@ -251,7 +254,7 @@ void Vulkan::createInstance() {
 }
 
 
-void Vulkan::checkExtensionSupport() {
+void Vulkan::checkInstanceExtensions() {
 	uint32_t extensionCount = NULL;
 	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
 	std::vector<VkExtensionProperties> extensions(extensionCount);
@@ -303,4 +306,27 @@ void Vulkan::checkValidationLayers() {
 	}
 	Vulkan::instanceInfo.enabledLayerCount = validationLayers.size();
 	Vulkan::instanceInfo.ppEnabledLayerNames = validationLayers.data();
+}
+
+
+bool Vulkan::checkLogicalDeviceExtensions(const VkPhysicalDevice& physicalDevice) {
+	uint32_t extensionCount = NULL;
+	vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, nullptr);
+	std::vector<VkExtensionProperties> extensions(extensionCount);
+	vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, extensions.data());
+	
+	for (const char* requiredExtensionName : Vulkan::logicalDeviceExtensions) {
+		bool requiredExtensionIsFound = false;
+		for (const VkExtensionProperties& extension : extensions) {
+			const char* extensionName = extension.extensionName;
+			if (strcmp(requiredExtensionName, extensionName) == 0) {
+				requiredExtensionIsFound = true;
+				break;
+			}
+		}
+		if (!requiredExtensionIsFound) {
+			return false;
+		}
+	}
+	return true;
 }

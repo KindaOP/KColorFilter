@@ -41,6 +41,9 @@ namespace kop {
 		static constexpr std::array<const char*, 1> validationLayers = {
 			"VK_LAYER_KHRONOS_validation"
 		};
+		static constexpr std::array<const char*, 1> logicalDeviceExtensions = {
+			VK_KHR_SWAPCHAIN_EXTENSION_NAME
+		};
 		static constexpr size_t queueRequirementCount = 2;	// Graphics, Present
 	private:
 		void createWindow() override;
@@ -69,8 +72,9 @@ namespace kop {
 		static VkInstanceCreateInfo instanceInfo;
 	private:
 		static void createInstance();
-		static void checkExtensionSupport();
+		static void checkInstanceExtensions();
 		static void checkValidationLayers();
+		static bool checkLogicalDeviceExtensions(const VkPhysicalDevice & physicalDevice);
 	};
 
 }
