@@ -41,21 +41,27 @@ namespace kop {
 		static constexpr std::array<const char*, 1> validationLayers = {
 			"VK_LAYER_KHRONOS_validation"
 		};
-		static constexpr size_t queueFamilyRequirementCount = 1;	// Graphics, Present
+		static constexpr size_t queueRequirementCount = 2;	// Graphics, Present
 	private:
 		void createWindow() override;
+		void createSurface();
 		void selectPhysicalDevice();
 		void selectQueueFamilies();
+		void createLogicalDevice();
 		void createShaderProgram() override;
 		void createVertexBuffers() override;
 		void createTextures() override;
 	private:
+		VkSurfaceKHR surface = VK_NULL_HANDLE;
 		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 		VkPhysicalDeviceProperties physicalDeviceProperties{};
 		VkPhysicalDeviceFeatures physicalDeviceFeatures{};
-		std::array<uint32_t, queueFamilyRequirementCount> queueFamilyIndices = { 0 };
+		std::array<uint32_t, queueRequirementCount> queueFamilyIndices = { NULL };
 		bool allQueueFamiliesAreSame = false;
-		std::array<VkDeviceQueueCreateInfo, queueFamilyRequirementCount> queueInfos = { {} };
+		VkDevice logicalDevice = VK_NULL_HANDLE;
+		VkDeviceCreateInfo logicalDeviceInfo{};
+		std::array<VkQueue, queueRequirementCount> queues = { VK_NULL_HANDLE };
+		std::array<VkDeviceQueueCreateInfo, queueRequirementCount> queueInfos = { {} };
 	private:
 		static size_t numInstances;
 		static VkInstance instance;

@@ -29,14 +29,19 @@ Vulkan::Vulkan(
 		Vulkan::createInstance();
 		ImGui_ImplGlfw_InitForVulkan(this->window, true);
 	}
+	this->createSurface();
 	this->selectPhysicalDevice();
 	this->selectQueueFamilies();
+	this->createLogicalDevice();
+
 	// ImGui_ImplVulkan_Init(,);
 	Vulkan::numInstances += 1;
 }
 
 
 Vulkan::~Vulkan() {
+	vkDestroyDevice(this->logicalDevice, nullptr);
+	vkDestroySurfaceKHR(Vulkan::instance, this->surface, nullptr);
 	Vulkan::numInstances -= 1;
 	if (Vulkan::numInstances == 0) {
 		vkDestroyInstance(Vulkan::instance, nullptr);
@@ -92,6 +97,14 @@ void Vulkan::createWindow() {
 }
 
 
+void Vulkan::createSurface() {
+	VkResult result = glfwCreateWindowSurface(Vulkan::instance, this->window, nullptr, &this->surface);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Vulkan: Cannot create surface.");
+	}
+}
+
+
 void Vulkan::selectPhysicalDevice() {
 	uint32_t physicalDeviceCount = NULL;
 	vkEnumeratePhysicalDevices(this->instance, &physicalDeviceCount, nullptr);
@@ -125,13 +138,19 @@ void Vulkan::selectQueueFamilies() {
 	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
 	vkGetPhysicalDeviceQueueFamilyProperties(this->physicalDevice, &queueFamilyCount, queueFamilies.data());
 
-	const size_t& indexCount = Vulkan::queueFamilyRequirementCount;
+	const size_t& indexCount = Vulkan::queueRequirementCount;
 	bool suitableQueueFamilyIsFounds[indexCount] = { false };
 	bool allSuitableQueueFamiliesAreFound = false;
 	for (size_t i = 0; i < indexCount; i++) {
 		if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
 			suitableQueueFamilyIsFounds[0] = true;
 			this->queueFamilyIndices[0] = i;
+		}
+		VkBool32 hasPresentSupport = false;
+		vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, this->surface, &hasPresentSupport);
+		if (hasPresentSupport) {
+			suitableQueueFamilyIsFounds[1] = true;
+			this->queueFamilyIndices[1] = i;
 		}
 		if (!allSuitableQueueFamiliesAreFound) {
 			allSuitableQueueFamiliesAreFound = Vulkan::allAreSame<bool>(
@@ -147,11 +166,35 @@ void Vulkan::selectQueueFamilies() {
 			}
 		}
 	}
-
 	if (!allSuitableQueueFamiliesAreFound) {
 		throw std::runtime_error("Vulkan: Cannot find all necessary queue families.");
 	}
+}
 
+
+void Vulkan::createLogicalDevice() {
+	const float queuePriority = 1.0f;
+	for (size_t i = 0; i < Vulkan::queueRequirementCount; i++) {
+		this->queueInfos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		this->queueInfos[i].queueFamilyIndex = this->queueFamilyIndices[i];
+		this->queueInfos[i].queueCount = 1;
+		this->queueInfos[i].pQueuePriorities = &queuePriority;
+	}
+
+	this->logicalDeviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	this->logicalDeviceInfo.pQueueCreateInfos = this->queueInfos.data();
+	this->logicalDeviceInfo.queueCreateInfoCount = this->queueInfos.size();
+	this->logicalDeviceInfo.pEnabledFeatures = &this->physicalDeviceFeatures;
+
+	VkResult result = vkCreateDevice(
+		this->physicalDevice, &this->logicalDeviceInfo, nullptr, &this->logicalDevice
+	);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Vulkan: Cannot create logical device.");
+	}
+	for (size_t i = 0; i < Vulkan::queueRequirementCount; i++) {
+		vkGetDeviceQueue(this->logicalDevice, this->queueFamilyIndices[i], 0, &this->queues[i]);
+	}
 }
 
 
