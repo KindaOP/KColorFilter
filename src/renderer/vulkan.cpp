@@ -91,6 +91,33 @@ void Vulkan::createWindow() {
 }
 
 
+void Vulkan::selectPhysicalDevice() {
+	uint32_t physicalDeviceCount = NULL;
+	vkEnumeratePhysicalDevices(this->instance, &physicalDeviceCount, nullptr);
+	if (physicalDeviceCount == 0) {
+		throw std::runtime_error("Vulkan: Cannot find existing GPU.");
+	}
+	std::vector<VkPhysicalDevice> physicalDevices(physicalDeviceCount);
+	vkEnumeratePhysicalDevices(this->instance, &physicalDeviceCount, physicalDevices.data());
+
+	bool suitablePhysicalDeviceIsFound = false;
+	for (const VkPhysicalDevice& physicalDevice : physicalDevices) {
+		vkGetPhysicalDeviceProperties(physicalDevice, &this->physicalDeviceProperties);
+		vkGetPhysicalDeviceFeatures(physicalDevice, &this->physicalDeviceFeatures);
+		if (
+			this->physicalDeviceFeatures.geometryShader	
+		) {
+			suitablePhysicalDeviceIsFound = true;
+			this->physicalDevice = physicalDevice;
+			break;
+		}
+	}
+	if (!suitablePhysicalDeviceIsFound) {
+		throw std::runtime_error("Vulkan: Cannot find suitable GPU.");
+	}
+}
+
+
 void Vulkan::createShaderProgram() {
 
 }

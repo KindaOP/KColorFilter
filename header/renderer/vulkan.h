@@ -32,11 +32,14 @@ namespace kop {
 	private:
 		void createWindow() override;
 		void selectPhysicalDevice();
+		void checkQueueFamilies();
 		void createShaderProgram() override;
 		void createVertexBuffers() override;
 		void createTextures() override;
 	private:
-
+		VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+		VkPhysicalDeviceProperties physicalDeviceProperties{};
+		VkPhysicalDeviceFeatures physicalDeviceFeatures{};
 	private:
 		static size_t numInstances;
 		static VkInstance instance;
