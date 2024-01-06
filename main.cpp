@@ -1,4 +1,4 @@
-#define __KOP_BACKEND_OPENGL__
+#define __KOP_BACKEND_VULKAN__
 
 #include <string>
 
@@ -36,7 +36,7 @@ int main() {
 		vertexShaderPath.c_str(), fragmentSahderPath.c_str(),
 		12, 12, webcam.getWidth(), webcam.getHeight()
 	);
-	kop::Application app(webcam, renderer);
-	app.run();
+	// kop::Application app(webcam, renderer);
+	// app.run();
 	return 0;
 }
