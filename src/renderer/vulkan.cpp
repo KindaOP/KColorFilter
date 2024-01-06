@@ -6,17 +6,17 @@
 #include <stdexcept>
 
 #ifdef NDEBUG
-const bool IS_DEBUG = false;
-const char* SHADER_COMPILER_PATH = "./glslc";
+static const bool IS_DEBUG = false;
+static const char* SHADER_COMPILER_PATH = "./glslc";
 #else
-const bool IS_DEBUG = true;
-const char* SHADER_COMPILER_PATH = "./external/glslc";
+static const bool IS_DEBUG = true;
+static const char* SHADER_COMPILER_PATH = "./external/glslc";
 #endif
 
 #ifdef _WIN32
-const bool IS_UNIX = false;
+static const bool IS_UNIX = false;
 #else
-const bool IS_UNIX = true;
+static const bool IS_UNIX = true;
 #endif
 
 using namespace kop;

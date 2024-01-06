@@ -3,9 +3,9 @@
 #include <opencv2/photo.hpp>
 
 #ifdef NDEBUG
-const bool IS_DEBUG = false;
+static const bool IS_DEBUG = false;
 #else
-const bool IS_DEBUG = true;
+static const bool IS_DEBUG = true;
 #endif
 
 using namespace kop;
