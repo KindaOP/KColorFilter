@@ -35,6 +35,7 @@ Vulkan::Vulkan(
 	this->selectCapabilities();
 	this->selectQueueFamilies();
 	this->createLogicalDevice();
+	this->createSwapchain();
 
 	// ImGui_ImplVulkan_Init(,);
 	Vulkan::numInstances += 1;
@@ -42,6 +43,7 @@ Vulkan::Vulkan(
 
 
 Vulkan::~Vulkan() {
+	vkDestroySwapchainKHR(this->logicalDevice, this->swapchain, nullptr);
 	vkDestroyDevice(this->logicalDevice, nullptr);
 	vkDestroySurfaceKHR(Vulkan::instance, this->surface, nullptr);
 	Vulkan::numInstances -= 1;
@@ -267,6 +269,46 @@ void Vulkan::createLogicalDevice() {
 	}
 	for (size_t i = 0; i < Vulkan::queueRequirementCount; i++) {
 		vkGetDeviceQueue(this->logicalDevice, this->queueFamilyIndices[i], 0, &this->queues[i]);
+	}
+}
+
+
+void Vulkan::createSwapchain() {
+	uint32_t imageCount = this->capabilities.minImageCount + 1;
+	const uint32_t& maxImageCount = this->capabilities.maxImageCount;
+	if (maxImageCount != NULL && imageCount > maxImageCount) {
+		imageCount = maxImageCount;
+	}
+	this->swapchainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	this->swapchainInfo.surface = this->surface;
+	this->swapchainInfo.minImageCount = imageCount;
+	this->swapchainInfo.imageFormat = this->format.format;
+	this->swapchainInfo.imageColorSpace = this->format.colorSpace;
+	this->swapchainInfo.imageExtent = this->capabilities.currentExtent;
+	this->swapchainInfo.imageArrayLayers = 1;
+	this->swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;	
+	
+	if (this->allQueueFamiliesAreSame) {
+		this->swapchainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		this->swapchainInfo.queueFamilyIndexCount = NULL;
+		this->swapchainInfo.pQueueFamilyIndices = nullptr;
+	}
+	else {
+		this->swapchainInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+		this->swapchainInfo.queueFamilyIndexCount = this->queueFamilyIndices.size();
+		this->swapchainInfo.pQueueFamilyIndices = this->queueFamilyIndices.data();
+	}
+	this->swapchainInfo.preTransform = this->capabilities.currentTransform;
+	this->swapchainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+	this->swapchainInfo.presentMode = this->presentMode;
+	this->swapchainInfo.clipped = VK_TRUE;
+	this->swapchainInfo.oldSwapchain = VK_NULL_HANDLE;
+
+	VkResult result = vkCreateSwapchainKHR(
+		this->logicalDevice, &this->swapchainInfo, nullptr, &this->swapchain
+	);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Vulkan: Cannot create swapchain.");
 	}
 }
 

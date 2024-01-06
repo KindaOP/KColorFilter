@@ -66,6 +66,7 @@ namespace kop {
 		void selectCapabilities();
 		void selectQueueFamilies();
 		void createLogicalDevice();
+		void createSwapchain();
 		void createShaderProgram() override;
 		void createVertexBuffers() override;
 		void createTextures() override;
@@ -83,6 +84,8 @@ namespace kop {
 		VkDeviceCreateInfo logicalDeviceInfo{};
 		std::array<VkQueue, queueRequirementCount> queues = { VK_NULL_HANDLE };
 		std::array<VkDeviceQueueCreateInfo, queueRequirementCount> queueInfos = { {} };
+		VkSwapchainKHR swapchain = VK_NULL_HANDLE;
+		VkSwapchainCreateInfoKHR swapchainInfo{};
 	private:
 		static size_t numInstances;
 		static VkInstance instance;
