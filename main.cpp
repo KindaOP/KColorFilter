@@ -17,8 +17,13 @@ static const char* FRAGMENT_SHADER_NAME = "opengl_frag.frag";
 #elif defined(__KOP_BACKEND_VULKAN__)
 #define __KOP_BACKEND_TYPE__ Vulkan
 #include "renderer/vulkan.h"
+#ifdef NDEBUG
+static const char* VERTEX_SHADER_NAME = "vulkan_vert.spv";
+static const char* FRAGMENT_SHADER_NAME = "vulkan_frag.spv";
+#else
 static const char* VERTEX_SHADER_NAME = "vulkan_vert.vert";
 static const char* FRAGMENT_SHADER_NAME = "vulkan_frag.frag";
+#endif
 
 #elif defined(__KOP_BACKEND_DIRECTX12__)
 #define __KOP_BACKEND_TYPE__ DirectX12

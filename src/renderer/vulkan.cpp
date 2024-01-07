@@ -185,9 +185,14 @@ Vulkan::VulkanShaderModule::VulkanShaderModule(
 ) 
 	: logicalDevice(logicalDevice)
 {
-	const std::string binaryPath = this->compileSource(sourcePath);
 	std::vector<char> binaryBuffer = {};
-	this->loadBinary(binaryPath.c_str(), binaryBuffer);
+	if (IS_DEBUG) {
+		const std::string binaryPath = this->compileSource(sourcePath);
+		this->loadBinary(binaryPath.c_str(), binaryBuffer);
+	}
+	else {
+		this->loadBinary(sourcePath, binaryBuffer);
+	}
 
 	this->moduleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	this->moduleInfo.codeSize = binaryBuffer.size();
@@ -197,7 +202,7 @@ Vulkan::VulkanShaderModule::VulkanShaderModule(
 		logicalDevice, &this->moduleInfo, nullptr, &this->handle
 	);
 	if (result != VK_SUCCESS) {
-		throw std::runtime_error("Vulkan: Cannot create shader module from " + binaryPath + '.');
+		throw std::runtime_error("Vulkan: Cannot create shader module.");
 	}
 }
 
