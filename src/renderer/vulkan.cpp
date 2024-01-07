@@ -2,7 +2,6 @@
 #include <backends/imgui_impl_vulkan.h>
 #include <filesystem>
 #include <fstream>
-#include <limits>
 #include <stdexcept>
 
 #ifdef NDEBUG
@@ -53,12 +52,19 @@ Vulkan::Vulkan(
 	this->createFrameBuffers();
 	this->createCommandPool();
 	this->createCommandBuffer();
+	this->createSyncObjects();
 	// ImGui_ImplVulkan_Init(,);
 	Vulkan::numInstances += 1;
 }
 
 
 Vulkan::~Vulkan() {
+	for (const VkSemaphore& semaphore : this->semaphores) {
+		vkDestroySemaphore(this->logicalDevice, semaphore, nullptr);
+	}
+	for (const VkFence& fence : this->fences) {
+		vkDestroyFence(this->logicalDevice, fence, nullptr);
+	}
 	vkDestroyCommandPool(this->logicalDevice, this->commandPool, nullptr);
 	for (const VkFramebuffer& frameBuffer : this->frameBuffers) {
 		vkDestroyFramebuffer(this->logicalDevice, frameBuffer, nullptr);
@@ -85,16 +91,31 @@ const char* Vulkan::getWindowName() const {
 
 
 void Vulkan::setViewport(int width, int height) {
-
 }
 
 
 void Vulkan::clear() {
+	this->viewport.width = static_cast<float>(this->swapchainInfo.imageExtent.width);
+	this->viewport.height = static_cast<float>(this->swapchainInfo.imageExtent.height);
+	this->scissor.extent = this->swapchainInfo.imageExtent;
+	this->renderPassBeginInfo.renderArea.extent = this->swapchainInfo.imageExtent;
+	this->renderPassBeginInfo.framebuffer = this->frameBuffers[this->imageIndex];
 
+	VkResult result = vkBeginCommandBuffer(
+		this->commandBuffer, &this->commandBufferBeginInfo
+	);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Vulkan: Cannot begin recording for command buffer.");
+	}
+	vkCmdBeginRenderPass(
+		this->commandBuffer, &this->renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE
+	);
+	vkCmdBindPipeline(this->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->pipeline);
 }
 
 
 bool Vulkan::add(const Object& obj) {
+	vkCmdDraw(this->commandBuffer, 3, 1, 0, 0);
 	return true;
 }
 
@@ -105,7 +126,11 @@ bool Vulkan::updateTexture(const void* data, size_t index) {
 
 
 void Vulkan::render() {
-
+	vkCmdEndRenderPass(this->commandBuffer);
+	VkResult result = vkEndCommandBuffer(this->commandBuffer);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Vulkan: Cannot record command buffer.");
+	}
 }
 
 
@@ -278,8 +303,8 @@ bool Vulkan::checkPresentMode(const VkPhysicalDevice& physicalDevice) {
 void Vulkan::selectCapabilities() {
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this->physicalDevice, this->surface, &this->capabilities);
 	if (
-		this->capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max() ||
-		this->capabilities.currentExtent.height != std::numeric_limits<uint32_t>::max()
+		this->capabilities.currentExtent.width != UINT32_MAX ||
+		this->capabilities.currentExtent.height != UINT32_MAX
 	) {
 		return;
 	}
@@ -373,6 +398,24 @@ void Vulkan::createSwapchain() {
 	if (maxImageCount != NULL && imageCount > maxImageCount) {
 		imageCount = maxImageCount;
 	}
+	this->setSwapchain(imageCount);
+
+	VkResult result = vkCreateSwapchainKHR(
+		this->logicalDevice, &this->swapchainInfo, nullptr, &this->swapchain
+	);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Vulkan: Cannot create swapchain.");
+	}
+
+	uint32_t actualImageCount = NULL;
+	vkGetSwapchainImagesKHR(this->logicalDevice, this->swapchain, &actualImageCount, nullptr);
+	this->images.resize(imageCount);
+	vkGetSwapchainImagesKHR(this->logicalDevice, this->swapchain, &actualImageCount, this->images.data());
+	this->setSwapchainViewport();
+}
+
+
+void Vulkan::setSwapchain(uint32_t imageCount) {
 	this->swapchainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 	this->swapchainInfo.surface = this->surface;
 	this->swapchainInfo.minImageCount = imageCount;
@@ -380,8 +423,8 @@ void Vulkan::createSwapchain() {
 	this->swapchainInfo.imageColorSpace = this->format.colorSpace;
 	this->swapchainInfo.imageExtent = this->capabilities.currentExtent;
 	this->swapchainInfo.imageArrayLayers = 1;
-	this->swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;	
-	
+	this->swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
 	if (this->allQueueFamiliesAreSame) {
 		this->swapchainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		this->swapchainInfo.queueFamilyIndexCount = NULL;
@@ -397,17 +440,16 @@ void Vulkan::createSwapchain() {
 	this->swapchainInfo.presentMode = this->presentMode;
 	this->swapchainInfo.clipped = VK_TRUE;
 	this->swapchainInfo.oldSwapchain = VK_NULL_HANDLE;
+}
 
-	VkResult result = vkCreateSwapchainKHR(
-		this->logicalDevice, &this->swapchainInfo, nullptr, &this->swapchain
-	);
-	if (result != VK_SUCCESS) {
-		throw std::runtime_error("Vulkan: Cannot create swapchain.");
-	}
-	uint32_t actualImageCount = NULL;
-	vkGetSwapchainImagesKHR(this->logicalDevice, this->swapchain, &actualImageCount, nullptr);
-	this->images.resize(imageCount);
-	vkGetSwapchainImagesKHR(this->logicalDevice, this->swapchain, &actualImageCount, this->images.data());
+
+void Vulkan::setSwapchainViewport() {
+	this->viewport.x = 0.0f;
+	this->viewport.y = 0.0f;
+	this->viewport.minDepth = 0.0f;
+	this->viewport.maxDepth = 1.0f;
+
+	this->scissor.offset = { 0,0 };
 }
 
 
@@ -470,6 +512,12 @@ void Vulkan::createRenderPass() {
 	if (result != VK_SUCCESS) {
 		throw std::runtime_error("Vulkan: Cannot create render pass.");
 	}
+
+	this->renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	this->renderPassBeginInfo.renderPass = this->renderPass;
+	this->renderPassBeginInfo.renderArea.offset = { 0, 0 };
+	this->renderPassBeginInfo.clearValueCount = 1;
+	this->renderPassBeginInfo.pClearValues = &Vulkan::clearColor;
 }
 
 
@@ -689,10 +737,32 @@ void Vulkan::createCommandBuffer() {
 	if (result != VK_SUCCESS) {
 		throw std::runtime_error("Vulkan: Cannot create commmand buffer.");
 	}
-
+	
 	this->commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	this->commandBufferBeginInfo.flags = NULL;
 	this->commandBufferBeginInfo.pInheritanceInfo = nullptr;
+}
+
+
+void Vulkan::createSyncObjects() {
+	for (size_t i = 0; i < this->semaphores.size(); i++) {
+		this->semaphoreInfos[i].sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		VkResult result = vkCreateSemaphore(
+			this->logicalDevice, &this->semaphoreInfos[i], nullptr, &this->semaphores[i]
+		);
+		if (result != VK_SUCCESS) {
+			throw std::runtime_error("Vulkan: Cannot create semaphore.");
+		}
+	}
+	for (size_t i = 0; i < this->fences.size(); i++) {
+		this->fenceInfos[i].sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		VkResult result = vkCreateFence(
+			this->logicalDevice, &this->fenceInfos[i], nullptr, &this->fences[i]
+		);
+		if (result != VK_SUCCESS) {
+			throw std::runtime_error("Vulkan: Cannot create fence.");
+		}
+	}
 }
 
 

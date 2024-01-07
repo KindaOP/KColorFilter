@@ -62,6 +62,7 @@ namespace kop {
 			VK_DYNAMIC_STATE_VIEWPORT,
 			VK_DYNAMIC_STATE_SCISSOR,
 		};
+		static constexpr VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 	private:
 		void createWindow() override;
 		void createSurface();
@@ -72,6 +73,8 @@ namespace kop {
 		void selectQueueFamilies();
 		void createLogicalDevice();
 		void createSwapchain();
+		void setSwapchain(uint32_t imageCount);
+		void setSwapchainViewport();
 		void createImageViews();
 		void createPipelineLayout();
 		void createRenderPass();
@@ -92,6 +95,7 @@ namespace kop {
 		void createFrameBuffers();
 		void createCommandPool();
 		void createCommandBuffer();
+		void createSyncObjects();
 		void createVertexBuffers() override;
 		void createTextures() override;
 	private:
@@ -110,9 +114,12 @@ namespace kop {
 		std::array<VkDeviceQueueCreateInfo, queueRequirementCount> queueInfos = { {} };
 		VkSwapchainKHR swapchain = VK_NULL_HANDLE;
 		VkSwapchainCreateInfoKHR swapchainInfo{};
+		VkViewport viewport{};
+		VkRect2D scissor{};
 		std::vector<VkImage> images = { VK_NULL_HANDLE };
 		std::vector<VkImageView> imageViews = { VK_NULL_HANDLE };
 		std::vector<VkImageViewCreateInfo> imageViewInfos = {};
+		uint32_t imageIndex = NULL;
 		VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		VkRenderPass renderPass = VK_NULL_HANDLE;
@@ -120,6 +127,7 @@ namespace kop {
 		VkAttachmentDescription colorAttachment{};
 		VkSubpassDescription subpass{};
 		VkAttachmentReference colorAttachmentReference{};
+		VkRenderPassBeginInfo renderPassBeginInfo{};
 		VkPipeline pipeline = VK_NULL_HANDLE;
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
 		std::array<VkPipelineShaderStageCreateInfo, 2> shaderInfos = { {} }; // Vertex, Fragment
@@ -139,6 +147,15 @@ namespace kop {
 		VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
 		VkCommandBufferAllocateInfo commandBufferInfo{};
 		VkCommandBufferBeginInfo commandBufferBeginInfo{};
+		std::array<VkSemaphore, 2> semaphores = {
+			VK_NULL_HANDLE,	// Image available for rendering
+			VK_NULL_HANDLE, // Image available for presenting
+		};
+		std::array<VkSemaphoreCreateInfo, 2> semaphoreInfos = { {} };
+		std::array<VkFence, 1> fences = {
+			VK_NULL_HANDLE, // Image is being rendered
+		};
+		std::array<VkFenceCreateInfo, 1> fenceInfos = { {} };
 	private:
 		class VulkanShaderModule {
 		public:
