@@ -89,6 +89,8 @@ namespace kop {
 		void setPipelineMultisampling();
 		void setPipelineColorBlending();
 		void setPipelineDepthAndStencilTesting();
+		void createFrameBuffers();
+		void createCommandPool();
 		void createVertexBuffers() override;
 		void createTextures() override;
 	private:
@@ -129,6 +131,8 @@ namespace kop {
 		VkPipelineColorBlendStateCreateInfo colorBlendingInfo{};
 		VkPipelineColorBlendAttachmentState colorBlendingAttachment{};
 		VkPipelineDepthStencilStateCreateInfo depthStencilInfo{};
+		std::vector<VkFramebuffer> frameBuffers = {};
+		std::vector<VkFramebufferCreateInfo> frameBufferInfos = {};
 	private:
 		class VulkanShaderModule {
 		public:

@@ -50,6 +50,7 @@ Vulkan::Vulkan(
 	this->createPipelineLayout();
 	this->createRenderPass();
 	this->createGraphicsPipeline();
+	this->createFrameBuffers();
 
 	// ImGui_ImplVulkan_Init(,);
 	Vulkan::numInstances += 1;
@@ -57,6 +58,9 @@ Vulkan::Vulkan(
 
 
 Vulkan::~Vulkan() {
+	for (const VkFramebuffer& frameBuffer : this->frameBuffers) {
+		vkDestroyFramebuffer(this->logicalDevice, frameBuffer, nullptr);
+	}
 	vkDestroyPipeline(this->logicalDevice, this->pipeline, nullptr);
 	vkDestroyRenderPass(this->logicalDevice, this->renderPass, nullptr);
 	vkDestroyPipelineLayout(this->logicalDevice, this->pipelineLayout, nullptr);
@@ -538,8 +542,8 @@ void Vulkan::setPipelineDynamicStates() {
 	this->dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 	this->dynamicStateInfo.dynamicStateCount = Vulkan::dynamicStates.size();
 	this->dynamicStateInfo.pDynamicStates = Vulkan::dynamicStates.data();
-	
-	this->pipelineInfo.pDynamicState = &this->dynamicStateInfo;
+
+this->pipelineInfo.pDynamicState = &this->dynamicStateInfo;
 }
 
 
@@ -558,7 +562,7 @@ void Vulkan::setPipelineInputAssembly() {
 	this->inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	this->inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	this->inputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
-	
+
 	this->pipelineInfo.pInputAssemblyState = &this->inputAssemblyInfo;
 }
 
@@ -567,7 +571,7 @@ void Vulkan::setPipelineViewports() {
 	this->viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	this->viewportInfo.viewportCount = 1;
 	this->viewportInfo.scissorCount = 1;
-	
+
 	this->pipelineInfo.pViewportState = &this->viewportInfo;
 }
 
@@ -584,7 +588,7 @@ void Vulkan::setPipelineRasterizer() {
 	this->rasterizerInfo.depthBiasConstantFactor = 0.0f;
 	this->rasterizerInfo.depthBiasClamp = 0.0f;
 	this->rasterizerInfo.depthBiasSlopeFactor = 0.0f;
-	
+
 	this->pipelineInfo.pRasterizationState = &this->rasterizerInfo;
 }
 
@@ -606,7 +610,7 @@ void Vulkan::setPipelineColorBlending() {
 	this->colorBlendingAttachment.colorWriteMask = (
 		VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
 		VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
-	);
+		);
 	this->colorBlendingAttachment.blendEnable = VK_TRUE;
 	this->colorBlendingAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 	this->colorBlendingAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
@@ -631,6 +635,34 @@ void Vulkan::setPipelineColorBlending() {
 
 void Vulkan::setPipelineDepthAndStencilTesting() {
 	this->pipelineInfo.pDepthStencilState = nullptr;
+}
+
+
+void Vulkan::createFrameBuffers() {
+	const size_t numImageViews = this->imageViews.size();
+	this->frameBuffers.resize(numImageViews);
+	this->frameBufferInfos.resize(numImageViews);
+	for (size_t i = 0; i < numImageViews; i++) {
+		this->frameBufferInfos[i].sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		this->frameBufferInfos[i].renderPass = this->renderPass;
+		this->frameBufferInfos[i].attachmentCount = 1;
+		this->frameBufferInfos[i].pAttachments = &this->imageViews[i];
+		this->frameBufferInfos[i].width = this->swapchainInfo.imageExtent.width;
+		this->frameBufferInfos[i].height = this->swapchainInfo.imageExtent.height;
+		this->frameBufferInfos[i].layers = 1;
+
+		VkResult result = vkCreateFramebuffer(
+			this->logicalDevice, &this->frameBufferInfos[i], nullptr, &this->frameBuffers[i]
+		);
+		if (result != VK_SUCCESS) {
+			throw std::runtime_error("Vulkan: Cannot create frame buffer.");
+		}
+	}
+}
+
+
+void Vulkan::createCommandPool() {
+
 }
 
 
