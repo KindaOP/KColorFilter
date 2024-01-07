@@ -54,7 +54,7 @@ namespace kop {
 		~Application() = default;
 		void run();
 	public:
-		static constexpr double fpsUpdatePeriodSeconds = 0.25;
+		static constexpr size_t fpsUpdateFrameCount = 60;
 	private:
 		void createOriginalRect();
 		void createFilteredRect();
