@@ -190,10 +190,10 @@ void Application::run() {
 		imagesAreAcquired = this->acquireImages();
 	}
 	double initTime = NULL;
-	double fps = NULL;
+	double spf = NULL;
 	size_t frameCount = 0;
 	const std::string staticWindowName = (
-		std::string(this->renderer->getWindowName()) + " FPS: "
+		std::string(this->renderer->getWindowName()) + " | SPF (ms): "
 	);
 	std::string dynamicWindowName;
 	initTime = glfwGetTime();
@@ -219,8 +219,8 @@ void Application::run() {
 
 		frameCount += 1;
 		if (frameCount >= Application::fpsUpdateFrameCount) {
-			fps = frameCount / (glfwGetTime() - initTime);
-			dynamicWindowName = staticWindowName + std::to_string(fps);
+			spf = 1e3 * (glfwGetTime() - initTime) / frameCount;
+			dynamicWindowName = staticWindowName + std::to_string(spf);
 			glfwSetWindowTitle(window, dynamicWindowName.c_str());
 			frameCount = 0;
 			initTime = glfwGetTime();
