@@ -57,6 +57,7 @@ Vulkan::Vulkan(
 
 
 Vulkan::~Vulkan() {
+	vkDestroyPipeline(this->logicalDevice, this->pipeline, nullptr);
 	vkDestroyRenderPass(this->logicalDevice, this->renderPass, nullptr);
 	vkDestroyPipelineLayout(this->logicalDevice, this->pipelineLayout, nullptr);
 	for (const VkImageView& imageView : this->imageViews) {
@@ -486,6 +487,13 @@ void Vulkan::setColorAttachments() {
 
 
 void Vulkan::createGraphicsPipeline() {
+	this->pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	this->pipelineInfo.layout = this->pipelineLayout;
+	this->pipelineInfo.renderPass = this->renderPass;
+	this->pipelineInfo.subpass = 0;
+	this->pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
+	this->pipelineInfo.basePipelineIndex = -1;
+
 	VulkanShaderModule vertexShader(this->logicalDevice, this->vertexShaderPath);
 	VulkanShaderModule fragmentShader(this->logicalDevice, this->fragmentShaderPath);
 	this->setPipelineShaders(vertexShader.handle, fragmentShader.handle);
@@ -496,6 +504,14 @@ void Vulkan::createGraphicsPipeline() {
 	this->setPipelineRasterizer();
 	this->setPipelineMultisampling();
 	this->setPipelineColorBlending();
+	this->setPipelineDepthAndStencilTesting();
+
+	VkResult result = vkCreateGraphicsPipelines(
+		this->logicalDevice, VK_NULL_HANDLE, 1, &this->pipelineInfo, nullptr, &this->pipeline
+	);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Vulkan: Cannot create graphics pipeline.");
+	}
 }
 
 
@@ -512,6 +528,9 @@ void Vulkan::setPipelineShaders(
 	this->shaderInfos[1].module = fragmentShader;
 	this->shaderInfos[1].pName = "main";
 	this->shaderInfos[1].pSpecializationInfo = nullptr;
+	
+	this->pipelineInfo.stageCount = this->shaderInfos.size();
+	this->pipelineInfo.pStages = this->shaderInfos.data();
 }
 
 
@@ -519,6 +538,8 @@ void Vulkan::setPipelineDynamicStates() {
 	this->dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 	this->dynamicStateInfo.dynamicStateCount = Vulkan::dynamicStates.size();
 	this->dynamicStateInfo.pDynamicStates = Vulkan::dynamicStates.data();
+	
+	this->pipelineInfo.pDynamicState = &this->dynamicStateInfo;
 }
 
 
@@ -528,6 +549,8 @@ void Vulkan::setPipelineVertexInput() {
 	this->vertexInputInfo.pVertexBindingDescriptions = nullptr;
 	this->vertexInputInfo.vertexAttributeDescriptionCount = 0;
 	this->vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+
+	this->pipelineInfo.pVertexInputState = &this->vertexInputInfo;
 }
 
 
@@ -535,6 +558,8 @@ void Vulkan::setPipelineInputAssembly() {
 	this->inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	this->inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	this->inputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
+	
+	this->pipelineInfo.pInputAssemblyState = &this->inputAssemblyInfo;
 }
 
 
@@ -542,6 +567,8 @@ void Vulkan::setPipelineViewports() {
 	this->viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	this->viewportInfo.viewportCount = 1;
 	this->viewportInfo.scissorCount = 1;
+	
+	this->pipelineInfo.pViewportState = &this->viewportInfo;
 }
 
 
@@ -557,6 +584,8 @@ void Vulkan::setPipelineRasterizer() {
 	this->rasterizerInfo.depthBiasConstantFactor = 0.0f;
 	this->rasterizerInfo.depthBiasClamp = 0.0f;
 	this->rasterizerInfo.depthBiasSlopeFactor = 0.0f;
+	
+	this->pipelineInfo.pRasterizationState = &this->rasterizerInfo;
 }
 
 
@@ -568,6 +597,8 @@ void Vulkan::setPipelineMultisampling() {
 	this->multisamplingInfo.pSampleMask = nullptr;
 	this->multisamplingInfo.alphaToCoverageEnable = VK_FALSE;
 	this->multisamplingInfo.alphaToOneEnable = VK_FALSE;
+
+	this->pipelineInfo.pMultisampleState = &this->multisamplingInfo;
 }
 
 
@@ -593,6 +624,13 @@ void Vulkan::setPipelineColorBlending() {
 	this->colorBlendingInfo.blendConstants[1] = 0.0f;
 	this->colorBlendingInfo.blendConstants[2] = 0.0f;
 	this->colorBlendingInfo.blendConstants[3] = 0.0f;
+
+	this->pipelineInfo.pColorBlendState = &this->colorBlendingInfo;
+}
+
+
+void Vulkan::setPipelineDepthAndStencilTesting() {
+	this->pipelineInfo.pDepthStencilState = nullptr;
 }
 
 

@@ -88,6 +88,7 @@ namespace kop {
 		void setPipelineRasterizer();
 		void setPipelineMultisampling();
 		void setPipelineColorBlending();
+		void setPipelineDepthAndStencilTesting();
 		void createVertexBuffers() override;
 		void createTextures() override;
 	private:
@@ -109,7 +110,6 @@ namespace kop {
 		std::vector<VkImage> images = {};
 		std::vector<VkImageView> imageViews = {};
 		std::vector<VkImageViewCreateInfo> imageViewInfos = {};
-		std::array<VkPipelineShaderStageCreateInfo, 2> shaderInfos = { {} }; // Vertex, Fragment
 		VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		VkRenderPass renderPass = VK_NULL_HANDLE;
@@ -117,6 +117,9 @@ namespace kop {
 		VkAttachmentDescription colorAttachment{};
 		VkSubpassDescription subpass{};
 		VkAttachmentReference colorAttachmentReference{};
+		VkPipeline pipeline = VK_NULL_HANDLE;
+		VkGraphicsPipelineCreateInfo pipelineInfo{};
+		std::array<VkPipelineShaderStageCreateInfo, 2> shaderInfos = { {} }; // Vertex, Fragment
 		VkPipelineDynamicStateCreateInfo dynamicStateInfo{};
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
@@ -125,6 +128,7 @@ namespace kop {
 		VkPipelineMultisampleStateCreateInfo multisamplingInfo{};
 		VkPipelineColorBlendStateCreateInfo colorBlendingInfo{};
 		VkPipelineColorBlendAttachmentState colorBlendingAttachment{};
+		VkPipelineDepthStencilStateCreateInfo depthStencilInfo{};
 	private:
 		class VulkanShaderModule {
 		public:
