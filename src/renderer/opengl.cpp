@@ -59,13 +59,6 @@ const char* OpenGL::getWindowName() const {
 }
 
 
-void OpenGL::setViewport(int width, int height) {
-	glViewport(0, 0, width, height);
-	this->windowWidth = width;
-	this->windowHeight = height;
-}
-
-
 void OpenGL::clear() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -264,7 +257,9 @@ void OpenGL::windowFrameBufferSizeCallback(
 	auto openglRenderer = static_cast<OpenGL* const>(
 		glfwGetWindowUserPointer(window)
 	);
-	openglRenderer->setViewport(width, height);
+	glViewport(0, 0, width, height);
+	openglRenderer->windowWidth = width;
+	openglRenderer->windowHeight = height;
 }
 
 

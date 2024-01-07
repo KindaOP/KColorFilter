@@ -95,11 +95,6 @@ const char* Vulkan::getWindowName() const {
 }
 
 
-void Vulkan::setViewport(int width, int height) {
-
-}
-
-
 void Vulkan::clear() {
 	const VulkanCommandBuffer& currentCommandBuffer = this->commandBuffers[this->frameIndex];
 	this->viewport.width = static_cast<float>(this->swapchainInfo.imageExtent.width);
