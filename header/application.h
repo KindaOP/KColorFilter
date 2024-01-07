@@ -53,6 +53,8 @@ namespace kop {
 		Application(Webcam& webcam, Renderer& renderer);
 		~Application() = default;
 		void run();
+	public:
+		static constexpr double fpsUpdatePeriodSeconds = 0.25;
 	private:
 		void createOriginalRect();
 		void createFilteredRect();

@@ -51,21 +51,24 @@ Vulkan::Vulkan(
 	this->createGraphicsPipeline();
 	this->createFrameBuffers();
 	this->createCommandPool();
-	this->createCommandBuffer();
-	this->createSyncObjects();
-	this->setSubmissionInfo();
-	this->setPresentationInfo();
+	this->createCommandBuffers();
+	this->setSubmissionPresentationInfo();
 	// ImGui_ImplVulkan_Init(,);
 	Vulkan::numInstances += 1;
 }
 
 
 Vulkan::~Vulkan() {
-	for (const VkSemaphore& semaphore : this->semaphores) {
-		vkDestroySemaphore(this->logicalDevice, semaphore, nullptr);
-	}
-	for (const VkFence& fence : this->fences) {
-		vkDestroyFence(this->logicalDevice, fence, nullptr);
+	for (const VulkanCommandBuffer& commandBuffer : this->commandBuffers) {
+		vkDestroyFence(
+			this->logicalDevice, commandBuffer.isRenderingFence, nullptr
+		);
+		vkDestroySemaphore(
+			this->logicalDevice, commandBuffer.isReadyForRenderingSemaphore, nullptr
+		);
+		vkDestroySemaphore(
+			this->logicalDevice, commandBuffer.isReadyForPresentingSemaphore, nullptr
+		);
 	}
 	vkDestroyCommandPool(this->logicalDevice, this->commandPool, nullptr);
 	for (const VkFramebuffer& frameBuffer : this->frameBuffers) {
@@ -98,32 +101,40 @@ void Vulkan::setViewport(int width, int height) {
 
 
 void Vulkan::clear() {
+	const VulkanCommandBuffer& currentCommandBuffer = this->commandBuffers[this->frameIndex];
 	this->viewport.width = static_cast<float>(this->swapchainInfo.imageExtent.width);
 	this->viewport.height = static_cast<float>(this->swapchainInfo.imageExtent.height);
 	this->scissor.extent = this->swapchainInfo.imageExtent;
 	this->renderPassBeginInfo.renderArea.extent = this->swapchainInfo.imageExtent;
+	this->submissionInfo.pCommandBuffers = &currentCommandBuffer.handle;
+	this->submissionInfo.pWaitSemaphores = &currentCommandBuffer.isReadyForRenderingSemaphore;
+	this->submissionInfo.pSignalSemaphores = &currentCommandBuffer.isReadyForPresentingSemaphore;
+	this->presentationInfo.pWaitSemaphores = &currentCommandBuffer.isReadyForPresentingSemaphore;
+	
 	vkWaitForFences(
-		this->logicalDevice, this->fences.size(), this->fences.data(), VK_TRUE, UINT64_MAX
+		this->logicalDevice, 1, &currentCommandBuffer.isRenderingFence, VK_TRUE, UINT64_MAX
 	);
-	vkResetFences(this->logicalDevice, this->fences.size(), this->fences.data());
+	vkResetFences(this->logicalDevice, 1, &currentCommandBuffer.isRenderingFence);
 	vkAcquireNextImageKHR(
 		this->logicalDevice, this->swapchain, UINT64_MAX,
-		this->semaphores[0], VK_NULL_HANDLE, &this->imageIndex
+		currentCommandBuffer.isReadyForRenderingSemaphore, VK_NULL_HANDLE, &this->imageIndex
 	);
 	this->renderPassBeginInfo.framebuffer = this->frameBuffers[this->imageIndex];
 	this->presentationInfo.pImageIndices = &this->imageIndex;
 
-	vkResetCommandBuffer(this->commandBuffer, NULL);
+	vkResetCommandBuffer(currentCommandBuffer.handle, NULL);
 	VkResult result = vkBeginCommandBuffer(
-		this->commandBuffer, &this->commandBufferBeginInfo
+		currentCommandBuffer.handle, &currentCommandBuffer.beginInfo
 	);
 	if (result != VK_SUCCESS) {
 		throw std::runtime_error("Vulkan: Cannot begin recording for command buffer.");
 	}
 	vkCmdBeginRenderPass(
-		this->commandBuffer, &this->renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE
+		currentCommandBuffer.handle, &this->renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE
 	);
-	vkCmdBindPipeline(this->commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, this->pipeline);
+	vkCmdBindPipeline(
+		currentCommandBuffer.handle, VK_PIPELINE_BIND_POINT_GRAPHICS, this->pipeline
+	);
 }
 
 
@@ -138,16 +149,19 @@ bool Vulkan::updateTexture(const void* data, size_t index) {
 
 
 void Vulkan::render() {
-	vkCmdSetViewport(this->commandBuffer, 0, 1, &this->viewport);
-	vkCmdSetScissor(this->commandBuffer, 0, 1, &this->scissor);
-	vkCmdDraw(this->commandBuffer, 3, 1, 0, 0);
-	vkCmdEndRenderPass(this->commandBuffer);
+	const VulkanCommandBuffer& currentCommandBuffer = this->commandBuffers[this->frameIndex];
+	vkCmdSetViewport(currentCommandBuffer.handle, 0, 1, &this->viewport);
+	vkCmdSetScissor(currentCommandBuffer.handle, 0, 1, &this->scissor);
+	vkCmdDraw(currentCommandBuffer.handle, 3, 1, 0, 0);
+	vkCmdEndRenderPass(currentCommandBuffer.handle);
 	
-	VkResult result = vkEndCommandBuffer(this->commandBuffer);
+	VkResult result = vkEndCommandBuffer(currentCommandBuffer.handle);
 	if (result != VK_SUCCESS) {
 		throw std::runtime_error("Vulkan: Cannot record command buffer.");
 	}
-	result = vkQueueSubmit(this->queues[0], 1, &this->submissionInfo, this->fences[0]);
+	result = vkQueueSubmit(
+		this->queues[0], 1, &this->submissionInfo, currentCommandBuffer.isRenderingFence
+	);
 	if (result != VK_SUCCESS) {
 		throw std::runtime_error("Vulkan: Failed to submit command buffer to queue.");
 	}
@@ -157,6 +171,7 @@ void Vulkan::render() {
 void Vulkan::present() {
 	vkQueuePresentKHR(this->queues[1], &this->presentationInfo);
 	glfwPollEvents();
+	this->frameIndex = (this->frameIndex + 1) % Vulkan::numRenderingFrames;
 }
 
 
@@ -230,6 +245,32 @@ void Vulkan::VulkanShaderModule::loadBinary(
 	file.seekg(0);
 	file.read(buffer.data(), fileSize);
 	file.close();
+}
+
+
+void Vulkan::VulkanCommandBuffer::createSyncObjects() {
+	this->fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	this->fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+	VkResult result = vkCreateFence(
+		*this->logicalDevice, &this->fenceInfo, nullptr, &this->isRenderingFence
+	);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Vulkan: Cannot create rendering fence.");
+	}
+
+	this->semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	result = vkCreateSemaphore(
+		*this->logicalDevice, &this->semaphoreInfo, nullptr, &this->isReadyForRenderingSemaphore
+	);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Vulkan: Cannot create semaphore for rendering.");
+	}
+	result = vkCreateSemaphore(
+		*this->logicalDevice, &this->semaphoreInfo, nullptr, &this->isReadyForPresentingSemaphore
+	);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Vulkan: Cannot create semaphore for presenting.");
+	}
 }
 
 
@@ -748,7 +789,7 @@ void Vulkan::createFrameBuffers() {
 
 void Vulkan::createCommandPool() {
 	this->commandPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	this->commandPoolInfo.queueFamilyIndex = this->queueFamilyIndices[0];	// Graphics
+	this->commandPoolInfo.queueFamilyIndex = this->queueFamilyIndices[0];
 	this->commandPoolInfo.flags |= VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	
 	VkResult result = vkCreateCommandPool(
@@ -760,64 +801,38 @@ void Vulkan::createCommandPool() {
 }
 
 
-void Vulkan::createCommandBuffer() {
-	this->commandBufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	this->commandBufferInfo.commandPool = this->commandPool;
-	this->commandBufferInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	this->commandBufferInfo.commandBufferCount = 1;
+void Vulkan::createCommandBuffers() {
+	for (VulkanCommandBuffer& commandBuffer : this->commandBuffers) {
+		commandBuffer.logicalDevice = &this->logicalDevice;
+		commandBuffer.allocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		commandBuffer.allocateInfo.commandPool = commandPool;
+		commandBuffer.allocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		commandBuffer.allocateInfo.commandBufferCount = 1;
 
-	VkResult result = vkAllocateCommandBuffers(
-		this->logicalDevice, &this->commandBufferInfo, &this->commandBuffer
-	);
-	if (result != VK_SUCCESS) {
-		throw std::runtime_error("Vulkan: Cannot create commmand buffer.");
-	}
-	
-	this->commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	this->commandBufferBeginInfo.flags = NULL;
-	this->commandBufferBeginInfo.pInheritanceInfo = nullptr;
-}
-
-
-void Vulkan::createSyncObjects() {
-	for (size_t i = 0; i < this->semaphores.size(); i++) {
-		this->semaphoreInfos[i].sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-		VkResult result = vkCreateSemaphore(
-			this->logicalDevice, &this->semaphoreInfos[i], nullptr, &this->semaphores[i]
+		VkResult result = vkAllocateCommandBuffers(
+			this->logicalDevice, &commandBuffer.allocateInfo, &commandBuffer.handle
 		);
 		if (result != VK_SUCCESS) {
-			throw std::runtime_error("Vulkan: Cannot create semaphore.");
+			throw std::runtime_error("Vulkan: Cannot create commmand buffer.");
 		}
-	}
-	for (size_t i = 0; i < this->fences.size(); i++) {
-		this->fenceInfos[i].sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-		this->fenceInfos[i].flags = VK_FENCE_CREATE_SIGNALED_BIT;
-		VkResult result = vkCreateFence(
-			this->logicalDevice, &this->fenceInfos[i], nullptr, &this->fences[i]
-		);
-		if (result != VK_SUCCESS) {
-			throw std::runtime_error("Vulkan: Cannot create fence.");
-		}
+
+		commandBuffer.createSyncObjects();
+		commandBuffer.beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		commandBuffer.beginInfo.flags = NULL;
+		commandBuffer.beginInfo.pInheritanceInfo = nullptr;
 	}
 }
 
 
-void Vulkan::setSubmissionInfo() {
+void Vulkan::setSubmissionPresentationInfo() {
 	this->submissionInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	this->submissionInfo.waitSemaphoreCount = 1;
-	this->submissionInfo.pWaitSemaphores = &this->semaphores[0];
 	this->submissionInfo.pWaitDstStageMask = Vulkan::waitStages.data();
 	this->submissionInfo.commandBufferCount = 1;
-	this->submissionInfo.pCommandBuffers = &this->commandBuffer;
+	this->submissionInfo.waitSemaphoreCount = 1;
 	this->submissionInfo.signalSemaphoreCount = 1;
-	this->submissionInfo.pSignalSemaphores = &this->semaphores[1];
-}
-
-
-void Vulkan::setPresentationInfo() {
+	
 	this->presentationInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	this->presentationInfo.waitSemaphoreCount = 1;
-	this->presentationInfo.pWaitSemaphores = &this->semaphores[1];
 	this->presentationInfo.swapchainCount = 1;
 	this->presentationInfo.pSwapchains = &this->swapchain;
 	this->presentationInfo.pResults = nullptr;

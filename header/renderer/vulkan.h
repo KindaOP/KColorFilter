@@ -67,6 +67,36 @@ namespace kop {
 		static constexpr std::array<VkPipelineStageFlags, 1> waitStages = {
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
 		};
+		static constexpr size_t numRenderingFrames = 2;
+	private:
+		class VulkanShaderModule {
+		public:
+			VulkanShaderModule() = delete;
+			VulkanShaderModule(const VkDevice& logicalDevice, const char* sourcePath);
+			~VulkanShaderModule();
+		public:
+			const VkDevice& logicalDevice;
+			VkShaderModule handle = VK_NULL_HANDLE;
+			VkShaderModuleCreateInfo moduleInfo{};
+		private:
+			static std::string compileSource(const char* sourcePath);
+			static void loadBinary(const char* binaryPath, std::vector<char>& buffer);
+		};
+
+		struct VulkanCommandBuffer {
+		public:
+			const VkDevice* logicalDevice = nullptr;
+			VkCommandBuffer handle = VK_NULL_HANDLE;
+			VkFence isRenderingFence = VK_NULL_HANDLE;
+			VkSemaphore isReadyForRenderingSemaphore = VK_NULL_HANDLE;
+			VkSemaphore isReadyForPresentingSemaphore = VK_NULL_HANDLE;
+			VkCommandBufferAllocateInfo allocateInfo{};
+			VkCommandBufferBeginInfo beginInfo{};
+			VkFenceCreateInfo fenceInfo{};
+			VkSemaphoreCreateInfo semaphoreInfo{};
+		public:
+			void createSyncObjects();
+		};
 	private:
 		void createWindow() override;
 		void createSurface();
@@ -98,10 +128,8 @@ namespace kop {
 		void setPipelineDepthAndStencilTesting();
 		void createFrameBuffers();
 		void createCommandPool();
-		void createCommandBuffer();
-		void createSyncObjects();
-		void setSubmissionInfo();
-		void setPresentationInfo();
+		void createCommandBuffers();
+		void setSubmissionPresentationInfo();
 		void createVertexBuffers() override;
 		void createTextures() override;
 	private:
@@ -151,33 +179,10 @@ namespace kop {
 		std::vector<VkFramebufferCreateInfo> frameBufferInfos = {};
 		VkCommandPool commandPool = VK_NULL_HANDLE;
 		VkCommandPoolCreateInfo commandPoolInfo{};
-		VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
-		VkCommandBufferAllocateInfo commandBufferInfo{};
-		VkCommandBufferBeginInfo commandBufferBeginInfo{};
-		std::array<VkSemaphore, 2> semaphores = {
-			VK_NULL_HANDLE,	// Image available for rendering
-			VK_NULL_HANDLE, // Image available for presenting
-		};
-		std::array<VkSemaphoreCreateInfo, 2> semaphoreInfos = { {} };
-		std::array<VkFence, 1> fences = {
-			VK_NULL_HANDLE, // Image is being rendered
-		};
-		std::array<VkFenceCreateInfo, 1> fenceInfos = { {} };
+		std::array<VulkanCommandBuffer, numRenderingFrames> commandBuffers = { {} };
+		uint32_t frameIndex = 0;
 		VkSubmitInfo submissionInfo{};
 		VkPresentInfoKHR presentationInfo{};
-	private:
-		class VulkanShaderModule {
-		public:
-			VulkanShaderModule(const VkDevice& logicalDevice, const char* sourcePath);
-			~VulkanShaderModule();
-		public:
-			const VkDevice& logicalDevice;
-			VkShaderModule handle = VK_NULL_HANDLE;
-			VkShaderModuleCreateInfo moduleInfo{};
-		private:
-			static std::string compileSource(const char* sourcePath);
-			static void loadBinary(const char* binaryPath, std::vector<char>& buffer);
-		};
 	private:
 		static size_t numInstances;
 		static VkInstance instance;

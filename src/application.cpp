@@ -1,6 +1,7 @@
 #include "application.h"
 #include <opencv2/imgproc.hpp>
 #include <opencv2/photo.hpp>
+#include <string>
 
 #ifdef NDEBUG
 static const bool IS_DEBUG = false;
@@ -188,6 +189,15 @@ void Application::run() {
 	while (!imagesAreAcquired) {
 		imagesAreAcquired = this->acquireImages();
 	}
+	double initTime = NULL;
+	double timeDiff = NULL;
+	double fps = NULL;
+	size_t frameCount = 0;
+	const std::string staticWindowName = (
+		std::string(this->renderer->getWindowName()) + " FPS: "
+	);
+	std::string dynamicWindowName;
+	initTime = glfwGetTime();
 	glfwShowWindow(window);
 	while (!glfwWindowShouldClose(window)) {
 		imagesAreAcquired = this->acquireImages();
@@ -207,6 +217,16 @@ void Application::run() {
 		this->renderGUIFrame();*/
 		this->renderer->render();
 		this->renderer->present();
+
+		timeDiff = glfwGetTime() - initTime;
+		frameCount += 1;
+		if (timeDiff > Application::fpsUpdatePeriodSeconds) {
+			fps = frameCount / Application::fpsUpdatePeriodSeconds;
+			dynamicWindowName = staticWindowName + std::to_string(fps);
+			glfwSetWindowTitle(window, dynamicWindowName.c_str());
+			frameCount = 0;
+			initTime = glfwGetTime();
+		}
 	}
 	
 	// End
