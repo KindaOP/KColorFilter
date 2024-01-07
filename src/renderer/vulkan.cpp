@@ -51,13 +51,15 @@ Vulkan::Vulkan(
 	this->createRenderPass();
 	this->createGraphicsPipeline();
 	this->createFrameBuffers();
-
+	this->createCommandPool();
+	this->createCommandBuffer();
 	// ImGui_ImplVulkan_Init(,);
 	Vulkan::numInstances += 1;
 }
 
 
 Vulkan::~Vulkan() {
+	vkDestroyCommandPool(this->logicalDevice, this->commandPool, nullptr);
 	for (const VkFramebuffer& frameBuffer : this->frameBuffers) {
 		vkDestroyFramebuffer(this->logicalDevice, frameBuffer, nullptr);
 	}
@@ -662,7 +664,35 @@ void Vulkan::createFrameBuffers() {
 
 
 void Vulkan::createCommandPool() {
+	this->commandPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	this->commandPoolInfo.queueFamilyIndex = this->queueFamilyIndices[0];	// Graphics
+	this->commandPoolInfo.flags |= VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	
+	VkResult result = vkCreateCommandPool(
+		this->logicalDevice, &this->commandPoolInfo, nullptr, &this->commandPool
+	);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Vulkan: Cannot create command pool");
+	}
+}
 
+
+void Vulkan::createCommandBuffer() {
+	this->commandBufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	this->commandBufferInfo.commandPool = this->commandPool;
+	this->commandBufferInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	this->commandBufferInfo.commandBufferCount = 1;
+
+	VkResult result = vkAllocateCommandBuffers(
+		this->logicalDevice, &this->commandBufferInfo, &this->commandBuffer
+	);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Vulkan: Cannot create commmand buffer.");
+	}
+
+	this->commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	this->commandBufferBeginInfo.flags = NULL;
+	this->commandBufferBeginInfo.pInheritanceInfo = nullptr;
 }
 
 

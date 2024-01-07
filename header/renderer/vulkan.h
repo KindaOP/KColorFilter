@@ -91,6 +91,7 @@ namespace kop {
 		void setPipelineDepthAndStencilTesting();
 		void createFrameBuffers();
 		void createCommandPool();
+		void createCommandBuffer();
 		void createVertexBuffers() override;
 		void createTextures() override;
 	private:
@@ -109,8 +110,8 @@ namespace kop {
 		std::array<VkDeviceQueueCreateInfo, queueRequirementCount> queueInfos = { {} };
 		VkSwapchainKHR swapchain = VK_NULL_HANDLE;
 		VkSwapchainCreateInfoKHR swapchainInfo{};
-		std::vector<VkImage> images = {};
-		std::vector<VkImageView> imageViews = {};
+		std::vector<VkImage> images = { VK_NULL_HANDLE };
+		std::vector<VkImageView> imageViews = { VK_NULL_HANDLE };
 		std::vector<VkImageViewCreateInfo> imageViewInfos = {};
 		VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
@@ -131,8 +132,13 @@ namespace kop {
 		VkPipelineColorBlendStateCreateInfo colorBlendingInfo{};
 		VkPipelineColorBlendAttachmentState colorBlendingAttachment{};
 		VkPipelineDepthStencilStateCreateInfo depthStencilInfo{};
-		std::vector<VkFramebuffer> frameBuffers = {};
+		std::vector<VkFramebuffer> frameBuffers = { VK_NULL_HANDLE };
 		std::vector<VkFramebufferCreateInfo> frameBufferInfos = {};
+		VkCommandPool commandPool = VK_NULL_HANDLE;
+		VkCommandPoolCreateInfo commandPoolInfo{};
+		VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
+		VkCommandBufferAllocateInfo commandBufferInfo{};
+		VkCommandBufferBeginInfo commandBufferBeginInfo{};
 	private:
 		class VulkanShaderModule {
 		public:
