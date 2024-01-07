@@ -190,10 +190,10 @@ void Application::run() {
 	}
 	glfwShowWindow(window);
 	while (!glfwWindowShouldClose(window)) {
-		/*imagesAreAcquired = this->acquireImages();
+		imagesAreAcquired = this->acquireImages();
 		this->webcam->setMafOrder(this->mafOrder);
 		this->renderer->clear();
-		this->initGUIFrame();
+		/*this->initGUIFrame();
 
 		if (imagesAreAcquired) {
 			this->renderer->add(this->originalRect);
@@ -204,14 +204,14 @@ void Application::run() {
 		this->addGUIColorPickers();
 		this->addGUIWebcamSettings();
 
-		this->renderGUIFrame();
+		this->renderGUIFrame();*/
 		this->renderer->render();
-		this->renderer->present();*/
-		glfwPollEvents();
+		this->renderer->present();
 	}
 	
 	// End
 	glfwHideWindow(window);
+	this->renderer->endLoop();
 	this->webcam->setActive(false);
 }
 

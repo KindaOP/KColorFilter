@@ -26,6 +26,7 @@ namespace kop {
 		bool updateTexture(const void* data, size_t index) override;
 		void render() override;
 		void present() override;
+		void endLoop() override;
 	public:
 		template <typename T>
 		static bool allAreSame(T* elements, size_t count, T value) {
@@ -63,6 +64,9 @@ namespace kop {
 			VK_DYNAMIC_STATE_SCISSOR,
 		};
 		static constexpr VkClearValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+		static constexpr std::array<VkPipelineStageFlags, 1> waitStages = {
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+		};
 	private:
 		void createWindow() override;
 		void createSurface();
@@ -78,7 +82,7 @@ namespace kop {
 		void createImageViews();
 		void createPipelineLayout();
 		void createRenderPass();
-		void setColorAttachments();
+		void setRenderPassAttachments();
 		void createGraphicsPipeline() override;
 		void setPipelineShaders(
 			const VkShaderModule& vertexShader, 
@@ -96,6 +100,8 @@ namespace kop {
 		void createCommandPool();
 		void createCommandBuffer();
 		void createSyncObjects();
+		void setSubmissionInfo();
+		void setPresentationInfo();
 		void createVertexBuffers() override;
 		void createTextures() override;
 	private:
@@ -125,8 +131,9 @@ namespace kop {
 		VkRenderPass renderPass = VK_NULL_HANDLE;
 		VkRenderPassCreateInfo renderPassInfo{};
 		VkAttachmentDescription colorAttachment{};
-		VkSubpassDescription subpass{};
 		VkAttachmentReference colorAttachmentReference{};
+		VkSubpassDescription subpass{};
+		VkSubpassDependency subpassDependency{};
 		VkRenderPassBeginInfo renderPassBeginInfo{};
 		VkPipeline pipeline = VK_NULL_HANDLE;
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
@@ -156,6 +163,8 @@ namespace kop {
 			VK_NULL_HANDLE, // Image is being rendered
 		};
 		std::array<VkFenceCreateInfo, 1> fenceInfos = { {} };
+		VkSubmitInfo submissionInfo{};
+		VkPresentInfoKHR presentationInfo{};
 	private:
 		class VulkanShaderModule {
 		public:

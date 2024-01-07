@@ -53,6 +53,8 @@ Vulkan::Vulkan(
 	this->createCommandPool();
 	this->createCommandBuffer();
 	this->createSyncObjects();
+	this->setSubmissionInfo();
+	this->setPresentationInfo();
 	// ImGui_ImplVulkan_Init(,);
 	Vulkan::numInstances += 1;
 }
@@ -91,6 +93,7 @@ const char* Vulkan::getWindowName() const {
 
 
 void Vulkan::setViewport(int width, int height) {
+
 }
 
 
@@ -99,8 +102,18 @@ void Vulkan::clear() {
 	this->viewport.height = static_cast<float>(this->swapchainInfo.imageExtent.height);
 	this->scissor.extent = this->swapchainInfo.imageExtent;
 	this->renderPassBeginInfo.renderArea.extent = this->swapchainInfo.imageExtent;
+	vkWaitForFences(
+		this->logicalDevice, this->fences.size(), this->fences.data(), VK_TRUE, UINT64_MAX
+	);
+	vkResetFences(this->logicalDevice, this->fences.size(), this->fences.data());
+	vkAcquireNextImageKHR(
+		this->logicalDevice, this->swapchain, UINT64_MAX,
+		this->semaphores[0], VK_NULL_HANDLE, &this->imageIndex
+	);
 	this->renderPassBeginInfo.framebuffer = this->frameBuffers[this->imageIndex];
+	this->presentationInfo.pImageIndices = &this->imageIndex;
 
+	vkResetCommandBuffer(this->commandBuffer, NULL);
 	VkResult result = vkBeginCommandBuffer(
 		this->commandBuffer, &this->commandBufferBeginInfo
 	);
@@ -115,7 +128,6 @@ void Vulkan::clear() {
 
 
 bool Vulkan::add(const Object& obj) {
-	vkCmdDraw(this->commandBuffer, 3, 1, 0, 0);
 	return true;
 }
 
@@ -126,16 +138,30 @@ bool Vulkan::updateTexture(const void* data, size_t index) {
 
 
 void Vulkan::render() {
+	vkCmdSetViewport(this->commandBuffer, 0, 1, &this->viewport);
+	vkCmdSetScissor(this->commandBuffer, 0, 1, &this->scissor);
+	vkCmdDraw(this->commandBuffer, 3, 1, 0, 0);
 	vkCmdEndRenderPass(this->commandBuffer);
+	
 	VkResult result = vkEndCommandBuffer(this->commandBuffer);
 	if (result != VK_SUCCESS) {
 		throw std::runtime_error("Vulkan: Cannot record command buffer.");
+	}
+	result = vkQueueSubmit(this->queues[0], 1, &this->submissionInfo, this->fences[0]);
+	if (result != VK_SUCCESS) {
+		throw std::runtime_error("Vulkan: Failed to submit command buffer to queue.");
 	}
 }
 
 
 void Vulkan::present() {
+	vkQueuePresentKHR(this->queues[1], &this->presentationInfo);
+	glfwPollEvents();
+}
 
+
+void Vulkan::endLoop() {
+	vkDeviceWaitIdle(this->logicalDevice);
 }
 
 
@@ -499,12 +525,14 @@ void Vulkan::createPipelineLayout() {
 
 
 void Vulkan::createRenderPass() {
-	this->setColorAttachments();
+	this->setRenderPassAttachments();
 	this->renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 	this->renderPassInfo.attachmentCount = 1;
 	this->renderPassInfo.pAttachments = &this->colorAttachment;
 	this->renderPassInfo.subpassCount = 1;
 	this->renderPassInfo.pSubpasses = &this->subpass;
+	this->renderPassInfo.dependencyCount = 1;
+	this->renderPassInfo.pDependencies = &this->subpassDependency;
 
 	VkResult result = vkCreateRenderPass(
 		this->logicalDevice, &this->renderPassInfo, nullptr, &this->renderPass
@@ -521,7 +549,7 @@ void Vulkan::createRenderPass() {
 }
 
 
-void Vulkan::setColorAttachments() {
+void Vulkan::setRenderPassAttachments() {
 	this->colorAttachment.format = this->swapchainInfo.imageFormat;
 	this->colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	this->colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -531,12 +559,19 @@ void Vulkan::setColorAttachments() {
 	this->colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	this->colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	
+	this->colorAttachmentReference.attachment = 0;
+	this->colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
 	this->subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	this->subpass.colorAttachmentCount = 1;
 	this->subpass.pColorAttachments = &this->colorAttachmentReference;
-	
-	this->colorAttachmentReference.attachment = 0;
-	this->colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	this->subpassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	this->subpassDependency.dstSubpass = 0;
+	this->subpassDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	this->subpassDependency.srcAccessMask = NULL;
+	this->subpassDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	this->subpassDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 }
 
 
@@ -756,6 +791,7 @@ void Vulkan::createSyncObjects() {
 	}
 	for (size_t i = 0; i < this->fences.size(); i++) {
 		this->fenceInfos[i].sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		this->fenceInfos[i].flags = VK_FENCE_CREATE_SIGNALED_BIT;
 		VkResult result = vkCreateFence(
 			this->logicalDevice, &this->fenceInfos[i], nullptr, &this->fences[i]
 		);
@@ -763,6 +799,28 @@ void Vulkan::createSyncObjects() {
 			throw std::runtime_error("Vulkan: Cannot create fence.");
 		}
 	}
+}
+
+
+void Vulkan::setSubmissionInfo() {
+	this->submissionInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	this->submissionInfo.waitSemaphoreCount = 1;
+	this->submissionInfo.pWaitSemaphores = &this->semaphores[0];
+	this->submissionInfo.pWaitDstStageMask = Vulkan::waitStages.data();
+	this->submissionInfo.commandBufferCount = 1;
+	this->submissionInfo.pCommandBuffers = &this->commandBuffer;
+	this->submissionInfo.signalSemaphoreCount = 1;
+	this->submissionInfo.pSignalSemaphores = &this->semaphores[1];
+}
+
+
+void Vulkan::setPresentationInfo() {
+	this->presentationInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	this->presentationInfo.waitSemaphoreCount = 1;
+	this->presentationInfo.pWaitSemaphores = &this->semaphores[1];
+	this->presentationInfo.swapchainCount = 1;
+	this->presentationInfo.pSwapchains = &this->swapchain;
+	this->presentationInfo.pResults = nullptr;
 }
 
 

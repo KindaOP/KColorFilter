@@ -155,4 +155,9 @@ GLFWwindow* Renderer::getWindow() const {
 }
 
 
+void Renderer::endLoop() {
+
+}
+
+
 size_t Renderer::numInstances = 0;

@@ -78,6 +78,7 @@ namespace kop {
 		virtual bool updateTexture(const void* data, size_t index) = 0;
 		virtual void render() = 0;
 		virtual void present() = 0;
+		virtual void endLoop();
 	public:
 		static constexpr size_t maxTextures = 2;
 	public:
