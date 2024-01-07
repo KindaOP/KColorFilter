@@ -190,7 +190,7 @@ void Application::run() {
 	}
 	glfwShowWindow(window);
 	while (!glfwWindowShouldClose(window)) {
-		imagesAreAcquired = this->acquireImages();
+		/*imagesAreAcquired = this->acquireImages();
 		this->webcam->setMafOrder(this->mafOrder);
 		this->renderer->clear();
 		this->initGUIFrame();
@@ -206,7 +206,8 @@ void Application::run() {
 
 		this->renderGUIFrame();
 		this->renderer->render();
-		this->renderer->present();
+		this->renderer->present();*/
+		glfwPollEvents();
 	}
 	
 	// End
