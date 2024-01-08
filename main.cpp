@@ -1,4 +1,4 @@
-#define __KOP_BACKEND_VULKAN__
+#define __KOP_BACKEND_OPENGL__
 
 #include <string>
 

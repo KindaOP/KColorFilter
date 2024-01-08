@@ -102,21 +102,17 @@ namespace kop {
 		void selectPhysicalDevice();
 		bool checkFormat(const VkPhysicalDevice& physicalDevice);
 		bool checkPresentMode(const VkPhysicalDevice& physicalDevice);
-		void selectCapabilities();
+		void setViewport();
 		void selectQueueFamilies();
 		void createLogicalDevice();
-		void createSwapchain();
-		void setSwapchain(uint32_t imageCount);
-		void setSwapchainViewport();
+		void createSwapchain(const VkSwapchainKHR& oldSwapchain);
+		void setSwapchain(uint32_t imageCount, const VkSwapchainKHR& oldSwapchain);
 		void createImageViews();
 		void createPipelineLayout();
 		void createRenderPass();
 		void setRenderPassAttachments();
 		void createGraphicsPipeline() override;
-		void setPipelineShaders(
-			const VkShaderModule& vertexShader, 
-			const VkShaderModule& fragmentShader
-		);
+		void setPipelineShaders(const VkShaderModule& vertexShader, const VkShaderModule& fragmentShader);
 		void setPipelineDynamicStates();
 		void setPipelineVertexInput();
 		void setPipelineInputAssembly();
@@ -129,6 +125,7 @@ namespace kop {
 		void createCommandPool();
 		void createCommandBuffers();
 		void setSubmissionPresentationInfo();
+		void recreateSwapchain();
 		void createVertexBuffers() override;
 		void createTextures() override;
 	private:
@@ -139,6 +136,8 @@ namespace kop {
 		VkSurfaceFormatKHR format{};
 		VkPresentModeKHR presentMode = VK_PRESENT_MODE_FIFO_KHR;
 		VkSurfaceCapabilitiesKHR capabilities{};
+		VkViewport viewport{};
+		VkRect2D scissor{};
 		std::array<uint32_t, queueRequirementCount> queueFamilyIndices = { NULL };
 		bool allQueueFamiliesAreSame = false;
 		VkDevice logicalDevice = VK_NULL_HANDLE;
@@ -147,8 +146,6 @@ namespace kop {
 		std::array<VkDeviceQueueCreateInfo, queueRequirementCount> queueInfos = { {} };
 		VkSwapchainKHR swapchain = VK_NULL_HANDLE;
 		VkSwapchainCreateInfoKHR swapchainInfo{};
-		VkViewport viewport{};
-		VkRect2D scissor{};
 		std::vector<VkImage> images = { VK_NULL_HANDLE };
 		std::vector<VkImageView> imageViews = { VK_NULL_HANDLE };
 		std::vector<VkImageViewCreateInfo> imageViewInfos = {};
@@ -182,6 +179,7 @@ namespace kop {
 		uint32_t frameIndex = 0;
 		VkSubmitInfo submissionInfo{};
 		VkPresentInfoKHR presentationInfo{};
+		bool frameBufferIsResized = false;
 	private:
 		static size_t numInstances;
 		static VkInstance instance;
@@ -191,6 +189,7 @@ namespace kop {
 		static void createInstance();
 		static void checkInstanceExtensions();
 		static void checkValidationLayers();
+		static void windowFrameBufferSizeCallback(GLFWwindow* window, int width, int height);
 		static bool checkLogicalDeviceExtensions(const VkPhysicalDevice & physicalDevice);
 	};
 

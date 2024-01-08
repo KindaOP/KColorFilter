@@ -41,10 +41,10 @@ Vulkan::Vulkan(
 	}
 	this->createSurface();
 	this->selectPhysicalDevice();
-	this->selectCapabilities();
+	this->setViewport();
 	this->selectQueueFamilies();
 	this->createLogicalDevice();
-	this->createSwapchain();
+	this->createSwapchain(VK_NULL_HANDLE);
 	this->createImageViews();
 	this->createPipelineLayout();
 	this->createRenderPass();
@@ -97,10 +97,6 @@ const char* Vulkan::getWindowName() const {
 
 void Vulkan::clear() {
 	const VulkanCommandBuffer& currentCommandBuffer = this->commandBuffers[this->frameIndex];
-	this->viewport.width = static_cast<float>(this->swapchainInfo.imageExtent.width);
-	this->viewport.height = static_cast<float>(this->swapchainInfo.imageExtent.height);
-	this->scissor.extent = this->swapchainInfo.imageExtent;
-	this->renderPassBeginInfo.renderArea.extent = this->swapchainInfo.imageExtent;
 	this->submissionInfo.pCommandBuffers = &currentCommandBuffer.handle;
 	this->submissionInfo.pWaitSemaphores = &currentCommandBuffer.isReadyForRenderingSemaphore;
 	this->submissionInfo.pSignalSemaphores = &currentCommandBuffer.isReadyForPresentingSemaphore;
@@ -109,11 +105,19 @@ void Vulkan::clear() {
 	vkWaitForFences(
 		this->logicalDevice, 1, &currentCommandBuffer.isRenderingFence, VK_TRUE, UINT64_MAX
 	);
+	while (true) {
+		VkResult result = vkAcquireNextImageKHR(
+			this->logicalDevice, this->swapchain, UINT64_MAX,
+			currentCommandBuffer.isReadyForRenderingSemaphore, VK_NULL_HANDLE, &this->imageIndex
+		);
+		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+			this->recreateSwapchain();
+		}
+		else {
+			break;
+		}
+	}
 	vkResetFences(this->logicalDevice, 1, &currentCommandBuffer.isRenderingFence);
-	vkAcquireNextImageKHR(
-		this->logicalDevice, this->swapchain, UINT64_MAX,
-		currentCommandBuffer.isReadyForRenderingSemaphore, VK_NULL_HANDLE, &this->imageIndex
-	);
 	this->renderPassBeginInfo.framebuffer = this->frameBuffers[this->imageIndex];
 	this->presentationInfo.pImageIndices = &this->imageIndex;
 
@@ -164,7 +168,15 @@ void Vulkan::render() {
 
 
 void Vulkan::present() {
-	vkQueuePresentKHR(this->queues[1], &this->presentationInfo);
+	VkResult result = vkQueuePresentKHR(this->queues[1], &this->presentationInfo);
+	if (
+		result == VK_ERROR_OUT_OF_DATE_KHR || 
+		result == VK_SUBOPTIMAL_KHR ||
+		this->frameBufferIsResized
+	) {
+		this->recreateSwapchain();
+		this->frameBufferIsResized = false;
+	}
 	glfwPollEvents();
 	this->frameIndex = (this->frameIndex + 1) % Vulkan::numRenderingFrames;
 }
@@ -284,6 +296,10 @@ void Vulkan::createWindow() {
 	if (this->window == nullptr) {
 		throw std::runtime_error("GLFW: Cannot create window.");
 	}
+	glfwSetWindowUserPointer(this->window, this);
+	glfwSetFramebufferSizeCallback(
+		this->window, Vulkan::windowFrameBufferSizeCallback
+	);
 }
 
 
@@ -322,6 +338,7 @@ void Vulkan::selectPhysicalDevice() {
 	if (!suitablePhysicalDeviceIsFound) {
 		throw std::runtime_error("Vulkan: Cannot find suitable GPU.");
 	}
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this->physicalDevice, this->surface, &this->capabilities);
 }
 
 
@@ -367,27 +384,36 @@ bool Vulkan::checkPresentMode(const VkPhysicalDevice& physicalDevice) {
 }
 
 
-void Vulkan::selectCapabilities() {
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this->physicalDevice, this->surface, &this->capabilities);
-	if (
-		this->capabilities.currentExtent.width != UINT32_MAX ||
-		this->capabilities.currentExtent.height != UINT32_MAX
-	) {
-		return;
+void Vulkan::setViewport() {
+	uint32_t& width = this->capabilities.currentExtent.width;
+	uint32_t& height = this->capabilities.currentExtent.height;
+	if (width != UINT32_MAX || height != UINT32_MAX) {
+		int fWidth = NULL;
+		int fHeight = NULL;
+		glfwGetFramebufferSize(this->window, &fWidth, &fHeight);
+		while (fWidth == 0 || fHeight == 0) {
+			glfwGetFramebufferSize(this->window, &fWidth, &fHeight);
+			glfwWaitEvents();
+		}
+		width = Vulkan::clamp<uint32_t>(
+			fWidth, this->capabilities.minImageExtent.width, this->capabilities.maxImageExtent.width
+		);
+		height = Vulkan::clamp<uint32_t>(
+			fHeight, this->capabilities.minImageExtent.height, this->capabilities.maxImageExtent.height
+		);
 	}
-	int width = NULL;
-	int height = NULL;
-	glfwGetFramebufferSize(this->window, &width, &height);
-	this->capabilities.currentExtent.width = Vulkan::clamp<uint32_t>(
-		this->capabilities.currentExtent.width,
-		this->capabilities.minImageExtent.width,
-		this->capabilities.maxImageExtent.width
-	);
-	this->capabilities.currentExtent.height = Vulkan::clamp<uint32_t>(
-		this->capabilities.currentExtent.height,
-		this->capabilities.minImageExtent.height,
-		this->capabilities.maxImageExtent.height
-	);
+
+	this->viewport.x = 0.0f;
+	this->viewport.y = 0.0f;
+	this->viewport.minDepth = 0.0f;
+	this->viewport.maxDepth = 1.0f;
+	this->viewport.width = static_cast<float>(width);
+	this->viewport.height = static_cast<float>(height);
+	this->scissor.offset = { 0,0 };
+	this->scissor.extent.width = width;
+	this->scissor.extent.height = height;
+	this->renderPassBeginInfo.renderArea.extent.width = width;
+	this->renderPassBeginInfo.renderArea.extent.height = height;
 }
 
 
@@ -459,13 +485,13 @@ void Vulkan::createLogicalDevice() {
 }
 
 
-void Vulkan::createSwapchain() {
+void Vulkan::createSwapchain(const VkSwapchainKHR& oldSwapchain) {
 	uint32_t imageCount = this->capabilities.minImageCount + 1;
 	const uint32_t& maxImageCount = this->capabilities.maxImageCount;
 	if (maxImageCount != NULL && imageCount > maxImageCount) {
 		imageCount = maxImageCount;
 	}
-	this->setSwapchain(imageCount);
+	this->setSwapchain(imageCount, oldSwapchain);
 
 	VkResult result = vkCreateSwapchainKHR(
 		this->logicalDevice, &this->swapchainInfo, nullptr, &this->swapchain
@@ -478,17 +504,17 @@ void Vulkan::createSwapchain() {
 	vkGetSwapchainImagesKHR(this->logicalDevice, this->swapchain, &actualImageCount, nullptr);
 	this->images.resize(imageCount);
 	vkGetSwapchainImagesKHR(this->logicalDevice, this->swapchain, &actualImageCount, this->images.data());
-	this->setSwapchainViewport();
 }
 
 
-void Vulkan::setSwapchain(uint32_t imageCount) {
+void Vulkan::setSwapchain(uint32_t imageCount, const VkSwapchainKHR& oldSwapchain) {
 	this->swapchainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 	this->swapchainInfo.surface = this->surface;
 	this->swapchainInfo.minImageCount = imageCount;
 	this->swapchainInfo.imageFormat = this->format.format;
 	this->swapchainInfo.imageColorSpace = this->format.colorSpace;
-	this->swapchainInfo.imageExtent = this->capabilities.currentExtent;
+	this->swapchainInfo.imageExtent.width = this->viewport.width;
+	this->swapchainInfo.imageExtent.height = this->viewport.height;
 	this->swapchainInfo.imageArrayLayers = 1;
 	this->swapchainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
@@ -506,17 +532,7 @@ void Vulkan::setSwapchain(uint32_t imageCount) {
 	this->swapchainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 	this->swapchainInfo.presentMode = this->presentMode;
 	this->swapchainInfo.clipped = VK_TRUE;
-	this->swapchainInfo.oldSwapchain = VK_NULL_HANDLE;
-}
-
-
-void Vulkan::setSwapchainViewport() {
-	this->viewport.x = 0.0f;
-	this->viewport.y = 0.0f;
-	this->viewport.minDepth = 0.0f;
-	this->viewport.maxDepth = 1.0f;
-
-	this->scissor.offset = { 0,0 };
+	this->swapchainInfo.oldSwapchain = oldSwapchain;
 }
 
 
@@ -736,7 +752,7 @@ void Vulkan::setPipelineColorBlending() {
 	this->colorBlendingAttachment.colorWriteMask = (
 		VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
 		VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT
-		);
+	);
 	this->colorBlendingAttachment.blendEnable = VK_TRUE;
 	this->colorBlendingAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 	this->colorBlendingAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
@@ -836,6 +852,23 @@ void Vulkan::setSubmissionPresentationInfo() {
 	this->presentationInfo.swapchainCount = 1;
 	this->presentationInfo.pSwapchains = &this->swapchain;
 	this->presentationInfo.pResults = nullptr;
+}
+
+
+void Vulkan::recreateSwapchain() {
+	vkDeviceWaitIdle(this->logicalDevice);
+	const VkSwapchainKHR oldSwapchain = this->swapchain;
+	this->setViewport();
+	this->createSwapchain(oldSwapchain);
+	for (const VkFramebuffer& frameBuffer : this->frameBuffers) {
+		vkDestroyFramebuffer(this->logicalDevice, frameBuffer, nullptr);
+	}
+	for (const VkImageView& imageView : this->imageViews) {
+		vkDestroyImageView(this->logicalDevice, imageView, nullptr);
+	}
+	vkDestroySwapchainKHR(this->logicalDevice, oldSwapchain, nullptr);
+	this->createImageViews();
+	this->createFrameBuffers();
 }
 
 
@@ -939,6 +972,16 @@ void Vulkan::checkValidationLayers() {
 	}
 	Vulkan::instanceInfo.enabledLayerCount = validationLayers.size();
 	Vulkan::instanceInfo.ppEnabledLayerNames = validationLayers.data();
+}
+
+
+void Vulkan::windowFrameBufferSizeCallback(
+	GLFWwindow* window, int width, int height
+) {
+	auto vulkanRenderer = static_cast<Vulkan* const>(glfwGetWindowUserPointer(window));
+	vulkanRenderer->frameBufferIsResized = true;
+	vulkanRenderer->windowWidth = width;
+	vulkanRenderer->windowHeight = height;
 }
 
 

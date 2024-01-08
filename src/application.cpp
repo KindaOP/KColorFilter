@@ -202,7 +202,7 @@ void Application::run() {
 		imagesAreAcquired = this->acquireImages();
 		this->webcam->setMafOrder(this->mafOrder);
 		this->renderer->clear();
-		/*this->initGUIFrame();
+		this->initGUIFrame();
 
 		if (imagesAreAcquired) {
 			this->renderer->add(this->originalRect);
@@ -213,7 +213,7 @@ void Application::run() {
 		this->addGUIColorPickers();
 		this->addGUIWebcamSettings();
 
-		this->renderGUIFrame();*/
+		this->renderGUIFrame();
 		this->renderer->render();
 		this->renderer->present();
 
